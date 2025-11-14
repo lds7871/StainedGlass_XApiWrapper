@@ -1,0 +1,87 @@
+spring:
+  application:
+    name: Auto_Scheduled_Task
+  session:
+    store-type: memory
+    timeout: 1800  # 30 分钟
+    cookie:
+      http-only: true
+      max-age: 1800 
+      name: JSESSIONID
+      path: /
+      secure: false
+  datasource:
+    # 数据库连接 URL - 根据实际情况修改
+    url: jdbc:mysql://数据库地址:3306/数据库名?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    # 数据库用户名
+    username: 数据库用户名
+    # 数据库密码
+    password: 数据库密码
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+    generate-ddl: false
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+  sql:
+    init:
+      mode: never
+
+# CORS 跨域配置
+# cors:
+#   # 允许的源（多个用逗号分隔）
+#   allowed-origins: https://xxx.top
+#   # 允许的 HTTP 方法
+#   allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+#   # 允许的请求头
+#   allowed-headers: "*"
+#   # 是否允许凭证（cookies、authorization headers）
+#   allow-credentials: true
+#   # 预检请求的缓存时间（秒）
+#   max-age: 3600
+
+# Twitter OAuth 2.0 配置
+# 请到 https://developer.twitter.com/en/portal/dashboard 获取这些凭证
+twitter:
+  oauth:
+    # 从 Twitter Developer Portal 获取 Client ID
+    # 步骤: 登录 developer.twitter.com -> Projects & Apps -> 选择 App -> Keys and tokens
+    client-id: 你的_CLIENT_ID
+    # 从 Twitter Developer Portal 获取 Client Secret
+    client-secret: 你的_CLIENT_SECRET
+    # 必须与 Twitter App 设置中的 Redirect URIs 相同
+    callback-url: http://localhost:8090/api/twitter/callback
+    # 申请的权限范围
+    scopes: tweet.read tweet.write users.read offline.access media.write like.write
+
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto
+      table-underline: true
+
+server:
+  port: 8090
+  servlet:
+    context-path: /
+
+logging:
+  level:
+    root: INFO
+    LDS.Person: DEBUG
+    org.springframework.web: WARN
+    org.springframework.web.servlet.DispatcherServlet: WARN
+    org.springframework.web.servlet.handler: WARN
+    org.apache.coyote: WARN
+    org.apache.coyote.http11: WARN
+    org.apache.tomcat: WARN
+    org.hibernate.SQL: DEBUG
+    com.baomidou.mybatisplus: DEBUG

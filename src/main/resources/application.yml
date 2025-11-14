@@ -1,0 +1,79 @@
+spring:
+  application:
+    name: Auto_Scheduled_Task
+  session:
+    store-type: memory
+    timeout: 1800  # 30 分钟
+    cookie:
+      http-only: true
+      max-age: 1800 
+      name: JSESSIONID
+      path: /
+      secure: false
+  datasource:
+    url: jdbc:mysql://115.190.170.56:3306/ldsperson?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    username: LDS7871
+    password: 375279901
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+    generate-ddl: false
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+  sql:
+    init:
+      mode: never
+
+# # CORS 跨域配置
+# cors:
+#   allowed-origins: http://zh-company.top,http://localhost:5174,http://127.0.0.1:5174
+#   allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+#   allowed-headers: "*"
+#   allow-credentials: true
+#   max-age: 3600
+
+# Twitter OAuth 2.0 配置
+# 请到 https://developer.twitter.com/en/portal/dashboard 获取这些凭证
+twitter:
+  oauth:
+    # 从 Twitter Developer Portal 获取 Client ID
+    client-id: UEhHYTA1VkNaUU1rYTh4MWpwbjM6MTpjaQ 
+    # 从 Twitter Developer Portal 获取 Client Secret
+    client-secret: BRBc3kRV_1BBYWwCyCFdUTJ4MJ1X_83LqBEz6K4_UYdnh4u1El
+    # 必须与 Twitter App 设置中的 Redirect URIs 相同
+    # 生产环境: https://zh-company.top/api/twitter/callback
+    callback-url:  http://115.190.170.56/callback/twitter/oauth
+    # 申请的权限范围
+    scopes: tweet.read tweet.write users.read offline.access media.write like.write
+
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto
+      table-underline: true
+
+server:
+  port: 8090
+  servlet:
+    context-path: /
+
+logging:
+  level:
+    root: INFO
+    LDS.Person: DEBUG
+    org.springframework.web: WARN                    # 改为 WARN，屏蔽 DEBUG 级别的日志
+    org.springframework.web.servlet.DispatcherServlet: WARN  # 屏蔽 DispatcherServlet 的 DEBUG 日志
+    org.springframework.web.servlet.handler: WARN   # 屏蔽路由处理器的 DEBUG 日志
+    org.apache.coyote: WARN                         # 屏蔽 Tomcat HTTP 解析错误日志
+    org.apache.coyote.http11: WARN                  # 屏蔽 HTTP/1.1 处理器的日志
+    org.apache.tomcat: WARN                         # 屏蔽 Tomcat 的 DEBUG 日志
+    org.hibernate.SQL: DEBUG
+    com.baomidou.mybatisplus: DEBUG
