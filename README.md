@@ -1,0 +1,31 @@
+# StainedGlass_XApiWrapper
+
+## 项目概览
+
+StainedGlass_XApiWrapper 是基于 Spring Boot 3.x 的 X/Twitter 自动化系统 API 服务。提供了一套可用的 API 接口，用于对接 X/Twitter 平台，支持推文创建、转发、媒体管理等功能。意在通过定时任务和其他逻辑完成账号自动化，亦为了创造便于管理的Bot账号。
+
+### 主要包含
+
+- 🔐 **OAuth 2.0 认证** - 集成 X/Twitter OAuth 流程
+- 📤 **推文发布** - 支持创建和转发推文
+- 🖼️ **媒体管理** - 媒体上传和库管理
+- 🔄 **Token 自动刷新** - 后台自动维护访问令牌
+- 📊 **API 文档** - Swagger UI 自动生成的 API 文档
+- 🗄️ **数据持久化** - MySQL 数据库存储
+
+### 技术栈
+
+- **Java 17** LTS（21亲测可行）
+- **Spring Boot 3.1.4**
+- **MyBatis-Plus** (ORM)
+- **MySQL 8.0+**
+- **Swagger 3.0**
+
+---
+
+## 📖 文档
+
+- **[项目快速配置指南](./项目快速配置指南.md)** - 环境配置、依赖信息和快速启动说明
+- **[APIFox接口文档]（https://f8slqhf5qu.apifox.cn/）** - API 接口文档推荐看这个（密码00FF00HEAD）
+- **[API 文档](./API文档.md)** - 本地的 API 接口文档和使用示例
+

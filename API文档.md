@@ -671,12 +671,7 @@ GET /api/serverinfo/startup
 
 ---
 
-## 📞 支持与反馈
 
-- **文档位置**: `d:\NewSave\AST\API_DOCUMENTATION.md`
-- **Swagger UI**: http://??.??.??.??:8090/swagger-ui.html
-- **日志位置**: `d:\NewSave\AST\logs\`
-- **配置文件**: `d:\NewSave\AST\src\main\resources\config.properties`
 
 ### 常见问题排查
 
@@ -691,7 +686,5 @@ GET /api/serverinfo/startup
 
 ---
 
-**版本**: 1.0  
-**最后更新**: 2025-11-12  
-**作者**: Auto_Scheduled_Task 系统  
-**许可**: MIT
+
+
