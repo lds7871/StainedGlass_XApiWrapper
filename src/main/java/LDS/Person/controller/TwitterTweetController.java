@@ -1,19 +1,28 @@
 package LDS.Person.controller;
 
 import LDS.Person.dto.request.CreateTweetRequest;
+import LDS.Person.dto.request.QuoteTweetRequest;
 import LDS.Person.dto.response.CreateTweetResponse;
+import LDS.Person.dto.response.QuoteTweetResponse;
 import LDS.Person.entity.TwitterToken;
 import LDS.Person.entity.MediaLibrary;
 import LDS.Person.service.TwitterTweetService;
 import LDS.Person.service.TwitterTokenService;
 import LDS.Person.service.MediaLibraryService;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -40,6 +49,11 @@ public class TwitterTweetController {
 
     @Autowired
     private MediaLibraryService mediaLibraryService;
+
+    @Autowired
+    private RestTemplate restTemplate;
+
+    private static final String TWITTER_API_BASE = "https://api.x.com/2";
 
     /**
      * 创建推文
@@ -227,6 +241,178 @@ public class TwitterTweetController {
             response.put("code", 500);
             response.put("message", "服务器错误: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * 引用推文
+     * 
+     * @param request 引用推文请求（包含 data 推文文本和 quote_tweet_id 被引用推文ID）
+     * @return 引用推文结果
+     * 参考: https://docs.x.com/x-api/posts/create-post
+     */
+    @PostMapping("/quote")
+    @ApiOperation(
+        value = "引用推文",
+        notes = "根据 config.properties 中的 DefaultUID 从数据库获取 access_token 创建引用推文。请求JSON格式: {\"Text\": \"推文内容\", \"quote_tweet_id\": \"被引用的推文ID\"}"
+    )
+    public ResponseEntity<QuoteTweetResponse> quoteTweet(@RequestBody QuoteTweetRequest request) {
+        try {
+            // 验证请求
+            if (request == null || request.getText() == null || request.getText().isBlank()) {
+                QuoteTweetResponse resp = QuoteTweetResponse.badRequest("推文文本（Text）不能为空");
+                log.warn("引用推文请求缺少 Text 参数");
+                return ResponseEntity.badRequest().body(resp);
+            }
+
+            if (request.getQuote_tweet_id() == null || request.getQuote_tweet_id().isBlank()) {
+                QuoteTweetResponse resp = QuoteTweetResponse.badRequest("引用推文ID（quote_tweet_id）不能为空");
+                log.warn("引用推文请求缺少 quote_tweet_id 参数");
+                return ResponseEntity.badRequest().body(resp);
+            }
+
+            // 从 config.properties 获取默认 UID
+            Properties props = new Properties();
+            try (InputStream input = getClass().getClassLoader().getResourceAsStream("config.properties")) {
+                if (input != null) {
+                    props.load(input);
+                }
+            } catch (java.io.IOException e) {
+                log.warn("读取 config.properties 失败: {}", e.getMessage());
+            }
+            String userId = props.getProperty("DefaultUID", "0000000");
+
+            log.info("收到引用推文请求，userId: {}（来自 config.properties），Text: {}，quote_tweet_id: {}", 
+                     userId, request.getText(), request.getQuote_tweet_id());
+
+            // 从数据库获取该用户的 access_token
+            TwitterToken twitterToken = twitterTokenService.getByUserId(userId);
+            if (twitterToken == null || twitterToken.getAccessToken() == null) {
+                QuoteTweetResponse resp = QuoteTweetResponse.unauthorized("未找到该用户的 access_token，请先登录授权");
+                log.error("未能从数据库获取用户 {} 的 token", userId);
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(resp);
+            }
+
+            String accessToken = twitterToken.getAccessToken();
+            log.info("已从数据库获取 access_token（用户: {}），token: {}...", userId, 
+                    accessToken.substring(0, Math.min(20, accessToken.length())));
+
+            // 调用 Twitter API 创建引用推文
+            Map<String, Object> quoteResult = sendQuoteTweetRequest(userId, request.getText(), request.getQuote_tweet_id(), accessToken);
+
+            if (quoteResult == null) {
+                QuoteTweetResponse resp = QuoteTweetResponse.serverError("引用推文失败");
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(resp);
+            }
+
+            if (quoteResult.containsKey("error")) {
+                QuoteTweetResponse resp = QuoteTweetResponse.badRequest((String) quoteResult.get("error"));
+                log.warn("Twitter API 返回错误: {}", quoteResult);
+                return ResponseEntity.badRequest().body(resp);
+            }
+
+            log.info("✅ 成功创建引用推文，userId: {}，quote_tweet_id: {}", userId, request.getQuote_tweet_id());
+            return ResponseEntity.ok(QuoteTweetResponse.success(quoteResult));
+
+        } catch (Exception e) {
+            log.error("引用推文异常", e);
+            QuoteTweetResponse resp = QuoteTweetResponse.serverError("服务器错误: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(resp);
+        }
+    }
+
+    /**
+     * 发送引用推文请求到 Twitter API
+     * 
+     * @param userId 用户 ID
+     * @param text 推文文本
+     * @param quoteTweetId 被引用的推文 ID
+     * @param accessToken 访问令牌
+     * @return 引用推文结果
+     */
+    private Map<String, Object> sendQuoteTweetRequest(String userId, String text, String quoteTweetId, String accessToken) {
+        try {
+            // 构建 API 请求 URL: POST /2/tweets
+            String url = String.format("%s/tweets", TWITTER_API_BASE);
+            log.debug("调用 Twitter API: {}", url);
+
+            // 构建请求体
+            JSONObject requestBody = new JSONObject();
+            requestBody.put("text", text);
+            
+            // 添加引用推文信息
+            JSONObject quoteOptions = new JSONObject();
+            quoteOptions.put("type", "Quote");
+            requestBody.put("quote_tweet_id", quoteTweetId);
+
+            // 设置请求头
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization", "Bearer " + accessToken);
+            headers.set("Accept", "application/json");
+            headers.set("Content-Type", "application/json");
+
+            HttpEntity<String> entity = new HttpEntity<>(requestBody.toString(), headers);
+
+            log.debug("发送到 Twitter API 的请求体: {}", requestBody.toJSONString());
+
+            // 执行 POST 请求
+            ResponseEntity<String> apiResponse = restTemplate.exchange(
+                    url, 
+                    HttpMethod.POST, 
+                    entity, 
+                    String.class
+            );
+
+            String responseBody = apiResponse.getBody();
+            log.debug("Twitter API 引用推文响应: {}", responseBody);
+
+            // 解析响应
+            JSONObject jsonResponse = JSON.parseObject(responseBody);
+
+            // 检查是否有错误
+            if (jsonResponse.containsKey("errors")) {
+                log.error("Twitter API 返回错误: {}", jsonResponse);
+                Map<String, Object> errorMap = new HashMap<>();
+                errorMap.put("error", jsonResponse.getJSONArray("errors").getJSONObject(0).getString("message"));
+                return errorMap;
+            }
+
+            // 提取数据
+            JSONObject data = jsonResponse.getJSONObject("data");
+            if (data == null) {
+                Map<String, Object> emptyMap = new HashMap<>();
+                emptyMap.put("error", "API 响应缺少 data 字段");
+                return emptyMap;
+            }
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("tweet_id", data.getString("id"));
+            result.put("text", text);
+            result.put("quote_tweet_id", quoteTweetId);
+            result.put("created_at", data.getString("created_at"));
+            
+            log.info("成功创建引用推文，API 返回: {}", data);
+            return result;
+
+        } catch (HttpClientErrorException e) {
+            String err = e.getResponseBodyAsString();
+            log.error("调用 Twitter API 引用推文失败: {} (状态码: {})", err, e.getStatusCode(), e);
+            Map<String, Object> errorMap = new HashMap<>();
+            try {
+                JSONObject jsonErr = JSON.parseObject(err);
+                if (jsonErr.containsKey("errors")) {
+                    errorMap.put("error", jsonErr.getJSONArray("errors").getJSONObject(0).getString("message"));
+                } else {
+                    errorMap.put("error", jsonErr.getString("detail"));
+                }
+            } catch (Exception ex) {
+                errorMap.put("error", err);
+            }
+            return errorMap;
+
+        } catch (Exception e) {
+            log.error("调用 Twitter API 失败", e);
+            return null;
         }
     }
 }

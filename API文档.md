@@ -1,4 +1,4 @@
-# 🚀 X/Twitter 自动化系统 API 文档
+# 🚀 X/Twitter 自动化系统 API 文档（请移步APIFox接口文档）
 
 
 ### 配置文件设置

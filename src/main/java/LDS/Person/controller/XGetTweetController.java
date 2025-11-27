@@ -1,7 +1,10 @@
 package LDS.Person.controller;
 
+import LDS.Person.dto.request.TweetDetailRequest;
+import LDS.Person.dto.response.TweetDetailResponse;
 import LDS.Person.entity.TwitterToken;
 import LDS.Person.repository.TwitterTokenRepository;
+import LDS.Person.service.GetTweetStorageService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import jakarta.servlet.http.HttpSession;
@@ -37,6 +40,9 @@ public class XGetTweetController {
 
     @Autowired
     private RestTemplate restTemplate;
+
+    @Autowired
+    private GetTweetStorageService getTweetStorageService;
 
     /**
      * Twitter API 基础 URL
@@ -74,19 +80,80 @@ public class XGetTweetController {
     public ResponseEntity<Map<String, Object>> getLatestTweets(
             @RequestParam(required = false, name = "userId") String userId,
             HttpSession session) {
+        return handleLatestTweets(userId, false);
+    }
 
-        Map<String, Object> response = new HashMap<>();
+    @GetMapping("/latestsave")
+    @ApiOperation(value = "获取最近推文保存数据库", notes = "获取同 /latest 的数据并将推文写入 get_tweets 表，已有 tweet_id 不重复插入")
+    public ResponseEntity<Map<String, Object>> getLatestTweetsAndStore(
+            @RequestParam(required = false, name = "userId") String userId,
+            HttpSession session) {
+        return handleLatestTweets(userId, true);
+    }
 
+    @PostMapping("/detail")
+    @ApiOperation(value = "获取推文详情", notes = "根据推文 ID 获取单条推文的详细信息")
+    public ResponseEntity<TweetDetailResponse> getTweetDetail(
+            @RequestBody TweetDetailRequest request) {
+        if (request == null || request.getTweetId() == null || request.getTweetId().isBlank()) {
+            return ResponseEntity.badRequest().body(TweetDetailResponse.badRequest("tweet_id 不能为空"));
+        }
+
+        String effectiveUserId = resolveUserId(request.getUserId());
+        TwitterToken latestToken = getLatestValidToken();
+        if (latestToken == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(TweetDetailResponse.error("未找到数据库中的有效 Token"));
+        }
+
+        String accessToken = latestToken.getAccessToken();
+        Map<String, Object> detail = fetchTweetDetail(request.getTweetId(), accessToken);
+
+        if (detail == null) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(TweetDetailResponse.error("获取推文详情失败"));
+        }
+
+        if (detail.containsKey("error")) {
+            return ResponseEntity.badRequest().body(TweetDetailResponse.badRequest((String) detail.get("error")));
+        }
+
+        TweetDetailResponse.TweetDetailData data = new TweetDetailResponse.TweetDetailData();
+        data.setId((String) detail.get("id"));
+        data.setText((String) detail.get("text"));
+        data.setAuthorId((String) detail.get("author_id"));
+        data.setCreatedAt((String) detail.get("created_at"));
+
+        TweetDetailResponse.TweetPublicMetrics metrics = new TweetDetailResponse.TweetPublicMetrics();
+        metrics.setLikeCount(asInteger(detail.get("like_count")));
+        metrics.setRetweetCount(asInteger(detail.get("retweet_count")));
+        metrics.setQuoteCount(asInteger(detail.get("quote_count")));
+        metrics.setReplyCount(asInteger(detail.get("reply_count")));
+        data.setPublicMetrics(metrics);
+
+        log.info("返回推文详情，tweet_id: {}，owner: {}", request.getTweetId(), effectiveUserId);
+        return ResponseEntity.ok(TweetDetailResponse.success(data));
+    }
+
+    private Integer asInteger(Object value) {
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
         try {
-            // 如果 userId 未提供，从 config.properties 读取 DefaultUID
-            if (userId == null || userId.isBlank()) {
-                userId = getDefaultUserId();
-                log.info("userId 未指定，从 config.properties 读取到 DefaultUID: {}", userId);
+            if (value instanceof String str && !str.isBlank()) {
+                return Integer.parseInt(str);
             }
+        } catch (NumberFormatException ignored) {
+        }
+        return null;
+    }
 
-            log.info("收到获取推文请求，目标用户 ID: {}", userId);
+    private ResponseEntity<Map<String, Object>> handleLatestTweets(String userIdParam, boolean persist) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            String effectiveUserId = resolveUserId(userIdParam);
+            log.info("收到获取推文请求，目标用户 ID: {}", effectiveUserId);
 
-            // 🔑 仅使用数据库最新 Token，并匹配 userId
             TwitterToken latestToken = getLatestValidToken();
             if (latestToken == null) {
                 response.put("code", 401);
@@ -98,12 +165,11 @@ public class XGetTweetController {
             String accessToken = latestToken.getAccessToken();
             String tokenUserId = latestToken.getTwitterUserId();
 
-            log.info("✅ 使用数据库最新 Token（userId: {}），目标用户 ID: {}", tokenUserId, userId);
+            log.info("✅ 使用数据库最新 Token（userId: {}），目标用户 ID: {}", tokenUserId, effectiveUserId);
             log.info("已从数据库获取 access_token，token: {}...", 
                     accessToken.substring(0, Math.min(20, accessToken.length())));
 
-            // 调用 Twitter API 获取用户推文
-            Map<String, Object> tweetData = fetchUserLatestTweets(userId, accessToken);
+            Map<String, Object> tweetData = fetchUserLatestTweets(effectiveUserId, accessToken);
 
             if (tweetData == null) {
                 response.put("code", 500);
@@ -118,11 +184,20 @@ public class XGetTweetController {
                 return ResponseEntity.badRequest().body(response);
             }
 
+            if (persist) {
+                Object tweetsObj = tweetData.get("tweets");
+                if (tweetsObj instanceof List<?>) {
+                    @SuppressWarnings("unchecked")
+                    List<Map<String, Object>> tweetsToStore = (List<Map<String, Object>>) tweetsObj;
+                    getTweetStorageService.saveTweets(tweetsToStore);
+                }
+            }
+
             response.put("code", 200);
             response.put("message", "成功获取推文");
             response.put("data", tweetData);
 
-            log.info("✅ 成功获取用户 {} 的最近推文", userId);
+            log.info("✅ 成功获取用户 {} 的最近推文", effectiveUserId);
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
@@ -131,6 +206,15 @@ public class XGetTweetController {
             response.put("message", "服务器错误: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
+    }
+
+    private String resolveUserId(String providedUserId) {
+        if (providedUserId == null || providedUserId.isBlank()) {
+            String defaultUserId = getDefaultUserId();
+            log.info("userId 未指定，从 config.properties 读取到 DefaultUID: {}", defaultUserId);
+            return defaultUserId;
+        }
+        return providedUserId;
     }
 
     /**
@@ -224,6 +308,65 @@ public class XGetTweetController {
 
         } catch (Exception e) {
             log.error("调用 Twitter API 失败", e);
+            return null;
+        }
+    }
+
+    private Map<String, Object> fetchTweetDetail(String tweetId, String accessToken) {
+        try {
+            String url = String.format(
+                    "%s/tweets/%s?tweet.fields=created_at,author_id,public_metrics",
+                    TWITTER_API_BASE, tweetId);
+
+            log.debug("调用 Twitter API 获取推文详情: {}", url);
+
+            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            headers.set("Authorization", "Bearer " + accessToken);
+            headers.set("Accept", "application/json");
+
+            org.springframework.http.HttpEntity<Void> entity = new org.springframework.http.HttpEntity<>(headers);
+            ResponseEntity<String> apiResponse = restTemplate.exchange(url, org.springframework.http.HttpMethod.GET, entity, String.class);
+
+            if (apiResponse.getStatusCode() != HttpStatus.OK) {
+                Map<String, Object> errorMap = new HashMap<>();
+                errorMap.put("error", "API 请求失败，状态码: " + apiResponse.getStatusCode());
+                return errorMap;
+            }
+
+            JSONObject jsonResponse = JSON.parseObject(apiResponse.getBody());
+
+            if (jsonResponse.containsKey("errors")) {
+                Map<String, Object> errorMap = new HashMap<>();
+                errorMap.put("error", jsonResponse.getJSONArray("errors").getJSONObject(0).getString("message"));
+                return errorMap;
+            }
+
+            JSONObject data = jsonResponse.getJSONObject("data");
+            if (data == null) {
+                Map<String, Object> errorMap = new HashMap<>();
+                errorMap.put("error", "推文不存在或被删除");
+                return errorMap;
+            }
+
+            Map<String, Object> detail = new HashMap<>();
+            detail.put("id", data.getString("id"));
+            detail.put("text", data.getString("text"));
+            detail.put("created_at", data.getString("created_at"));
+            detail.put("author_id", data.getString("author_id"));
+
+            JSONObject publicMetrics = data.getJSONObject("public_metrics");
+            if (publicMetrics != null) {
+                detail.put("like_count", publicMetrics.getIntValue("like_count"));
+                detail.put("retweet_count", publicMetrics.getIntValue("retweet_count"));
+                detail.put("quote_count", publicMetrics.getIntValue("quote_count"));
+                detail.put("reply_count", publicMetrics.getIntValue("reply_count"));
+            }
+
+            log.info("成功获取推文详情: {}", tweetId);
+            return detail;
+
+        } catch (Exception e) {
+            log.error("获取推文详情失败", e);
             return null;
         }
     }
