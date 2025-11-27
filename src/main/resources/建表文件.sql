@@ -39,3 +39,15 @@ create index idx_user_id
 ##########################
 
 
+CREATE TABLE get_tweets (
+    -- 原生自增主键，唯一标识数据库中的每条记录
+       id INT AUTO_INCREMENT PRIMARY KEY,
+    -- 推文的唯一ID，使用字符串存储，避免大整数溢出
+       tweet_id VARCHAR(50) NOT NULL comment '推文ID',
+    -- 推文创建时间，使用时间戳类型
+       created_at TIMESTAMP NOT NULL comment '创建时间',
+    -- 作者ID，使用字符串存储，避免大整数溢出
+       author_id VARCHAR(50) NOT NULL comment '作者ID',
+    -- 推文文本内容，使用TEXT存储
+       text VARCHAR(2550) comment '推文内容'
+)comment '推文获取表';
