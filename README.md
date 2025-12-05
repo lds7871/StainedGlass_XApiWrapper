@@ -26,6 +26,6 @@ StainedGlass_XApiWrapper 是基于 Spring Boot 3.x 的 X/Twitter 自动化系统
 ## 📖 文档
 - **[更新日志](./更新日志.md)** - 日志更新总览，最新动态可以看feature分支
 - **[项目快速配置指南](./项目快速配置指南.md)** - 环境配置、依赖信息和快速启动说明
-- **[APIFox接口文档](https://f8slqhf5qu.apifox.cn)** - API 接口文档推荐看这个（密码00FF00HEAD）
+- **[APIFox接口文档](https://f8slqhf5qu.apifox.cn)** - API 接口文档推荐看这个
 - **[API 文档](./API文档.md)** - 本地的 API 接口文档和使用示例(不再使用)
 
