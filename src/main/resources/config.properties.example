@@ -1,8 +1,5 @@
 # ========== 媒体配置 ==========
-# 媒体图片本地抽取路径
-# Windows 示例: C:\\Users\\YourUsername\\Desktop\\XMediaSaveImg
-# Linux 示例: /home/username/xmedia
-# macOS 示例: /Users/username/xmedia
+# 媒体图片本地抽取路径（随机抽取.png）
 saveimgdir=C:\\Users\\YourUsername\\Desktop\\XMediaSaveImg
 
 # 数据库读取最近媒体数量限制
