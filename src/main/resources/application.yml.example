@@ -53,8 +53,8 @@ twitter:
     client-id: 你的_CLIENT_ID
     # 从 Twitter Developer Portal 获取 Client Secret
     client-secret: 你的_CLIENT_SECRET
-    # 必须与 Twitter App 设置中的 Redirect URIs 相同
-    callback-url: http://localhost:8090/api/twitter/callback
+    # 必须与 Twitter App 设置中的 Redirect URIs 相同（这里只要IP不要端口）
+    callback-url: http://公网IP/api/twitter/callback（这里只要IP不要端口）
     # 申请的权限范围
     scopes: tweet.read tweet.write users.read offline.access media.write like.write
 
