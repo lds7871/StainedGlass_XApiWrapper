@@ -6,6 +6,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
 import java.util.Properties;
+import java.util.List;
+import java.util.ArrayList;
 
 public class ConfigEditor extends JFrame {
     // config.properties 相关字段
@@ -23,6 +25,20 @@ public class ConfigEditor extends JFrame {
     private JTextField twitterClientIdField;
     private JTextField twitterClientSecretField;
     private JTextField twitterCallbackUrlField;
+
+    // ip-whitelist UI
+    private DefaultListModel<String> ipListModel;
+    private JList<String> ipList;
+    private JButton ipAddButton;
+    private JButton ipEditButton;
+    private JButton ipRemoveButton;
+
+    // pass-tokens UI
+    private DefaultListModel<String> passListModel;
+    private JList<String> passList;
+    private JButton passAddButton;
+    private JButton passEditButton;
+    private JButton passRemoveButton;
 
     private JButton saveButton;
     private JButton loadButton;
@@ -201,7 +217,98 @@ public class ConfigEditor extends JFrame {
 
 
         contentPanel.add(twitterPanel);
+        contentPanel.add(Box.createVerticalStrut(15));
+
+        // IP 白名单面板
+        JPanel ipPanel = new JPanel(new BorderLayout(6, 6));
+        ipPanel.setBorder(BorderFactory.createTitledBorder("IP WhiteList (ip-whitelist)"));
+        ipListModel = new DefaultListModel<>();
+        ipList = new JList<>(ipListModel);
+        ipList.setVisibleRowCount(6);
+        ipPanel.add(new JScrollPane(ipList), BorderLayout.CENTER);
+        JPanel ipBtnPanel = new JPanel();
+        ipAddButton = new JButton("增加");
+        ipEditButton = new JButton("编辑");
+        ipRemoveButton = new JButton("删除");
+        ipBtnPanel.add(ipAddButton);
+        ipBtnPanel.add(ipEditButton);
+        ipBtnPanel.add(ipRemoveButton);
+        ipPanel.add(ipBtnPanel, BorderLayout.SOUTH);
+        contentPanel.add(ipPanel);
+        contentPanel.add(Box.createVerticalStrut(15));
+
+        // Pass Tokens 面板
+        JPanel passPanel = new JPanel(new BorderLayout(6, 6));
+        passPanel.setBorder(BorderFactory.createTitledBorder("Pass Tokens (pass-tokens)"));
+        passListModel = new DefaultListModel<>();
+        passList = new JList<>(passListModel);
+        passList.setVisibleRowCount(6);
+        passPanel.add(new JScrollPane(passList), BorderLayout.CENTER);
+        JPanel passBtnPanel = new JPanel();
+        passAddButton = new JButton("增加");
+        passEditButton = new JButton("编辑");
+        passRemoveButton = new JButton("删除");
+        passBtnPanel.add(passAddButton);
+        passBtnPanel.add(passEditButton);
+        passBtnPanel.add(passRemoveButton);
+        passPanel.add(passBtnPanel, BorderLayout.SOUTH);
+        contentPanel.add(passPanel);
         contentPanel.add(Box.createVerticalGlue());
+
+        // 按钮事件绑定
+        ipAddButton.addActionListener(e -> {
+            String v = JOptionPane.showInputDialog(this, "请输入要添加的 IP:", "添加 IP", JOptionPane.PLAIN_MESSAGE);
+            if (v != null && !v.trim().isEmpty()) {
+                ipListModel.addElement(v.trim());
+            }
+        });
+        ipEditButton.addActionListener(e -> {
+            int idx = ipList.getSelectedIndex();
+            if (idx >= 0) {
+                String cur = ipListModel.get(idx);
+                String v = JOptionPane.showInputDialog(this, "编辑 IP:", cur);
+                if (v != null && !v.trim().isEmpty()) {
+                    ipListModel.set(idx, v.trim());
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "请选择一项进行编辑", "提示", JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+        ipRemoveButton.addActionListener(e -> {
+            int idx = ipList.getSelectedIndex();
+            if (idx >= 0) {
+                ipListModel.remove(idx);
+            } else {
+                JOptionPane.showMessageDialog(this, "请选择一项进行删除", "提示", JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+
+        passAddButton.addActionListener(e -> {
+            String v = JOptionPane.showInputDialog(this, "请输入要添加的 Pass Token:", "添加 Pass Token", JOptionPane.PLAIN_MESSAGE);
+            if (v != null && !v.trim().isEmpty()) {
+                passListModel.addElement(v.trim());
+            }
+        });
+        passEditButton.addActionListener(e -> {
+            int idx = passList.getSelectedIndex();
+            if (idx >= 0) {
+                String cur = passListModel.get(idx);
+                String v = JOptionPane.showInputDialog(this, "编辑 Pass Token:", cur);
+                if (v != null && !v.trim().isEmpty()) {
+                    passListModel.set(idx, v.trim());
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "请选择一项进行编辑", "提示", JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+        passRemoveButton.addActionListener(e -> {
+            int idx = passList.getSelectedIndex();
+            if (idx >= 0) {
+                passListModel.remove(idx);
+            } else {
+                JOptionPane.showMessageDialog(this, "请选择一项进行删除", "提示", JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
 
         JScrollPane scrollPane = new JScrollPane(contentPanel);
         scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -248,9 +355,52 @@ public class ConfigEditor extends JFrame {
             twitterClientIdField.setText(extractYmlValue(ymlContent, "client-id:", "你的_CLIENT_ID"));
             twitterClientSecretField.setText(extractYmlValue(ymlContent, "client-secret:", "你的_CLIENT_SECRET"));
             twitterCallbackUrlField.setText(extractYmlValue(ymlContent, "callback-url:", "http://localhost:8090/api/twitter/callback"));
+
+            // 解析 ip-whitelist 列表
+            List<String> ipListVals = extractYmlList(ymlContent, "ip-whitelist:");
+            ipListModel.clear();
+            for (String v : ipListVals) ipListModel.addElement(v);
+
+            // 解析 pass-tokens 列表
+            List<String> passVals = extractYmlList(ymlContent, "pass-tokens:");
+            passListModel.clear();
+            for (String v : passVals) passListModel.addElement(v);
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this, "加载 application.yml 失败: " + e.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    private List<String> extractYmlList(String content, String key) {
+        List<String> res = new ArrayList<>();
+        String[] lines = content.split("\n");
+        boolean inSection = false;
+        int keyIndent = -1;
+        for (int i = 0; i < lines.length; i++) {
+            String line = lines[i];
+            String trimmed = line.trim();
+            if (!inSection) {
+                if (trimmed.startsWith(key)) {
+                    inSection = true;
+                    keyIndent = line.indexOf(trimmed);
+                }
+            } else {
+                if (trimmed.startsWith("-")) {
+                    String value = trimmed.substring(1).trim();
+                    if ((value.startsWith("\"") && value.endsWith("\"")) || (value.startsWith("'") && value.endsWith("'"))) {
+                        value = value.substring(1, value.length() - 1);
+                    }
+                    res.add(value);
+                } else {
+                    if (trimmed.isEmpty()) {
+                        continue;
+                    }
+                    int indent = line.indexOf(trimmed);
+                    if (indent <= keyIndent) break;
+                    else break;
+                }
+            }
+        }
+        return res;
     }
 
     private String extractYmlValue(String content, String key, String defaultValue) {
@@ -314,6 +464,16 @@ public class ConfigEditor extends JFrame {
             ymlContent = replaceYmlValue(ymlContent, "client-secret:", twitterClientSecretField.getText());
             ymlContent = replaceYmlValue(ymlContent, "callback-url:", twitterCallbackUrlField.getText());
 
+            // 替换 ip-whitelist 列表
+            List<String> ipVals = new ArrayList<>();
+            for (int i = 0; i < ipListModel.size(); i++) ipVals.add(ipListModel.get(i));
+            ymlContent = replaceYmlList(ymlContent, "ip-whitelist:", ipVals);
+
+            // 替换 pass-tokens 列表
+            List<String> passVals = new ArrayList<>();
+            for (int i = 0; i < passListModel.size(); i++) passVals.add(passListModel.get(i));
+            ymlContent = replaceYmlList(ymlContent, "pass-tokens:", passVals);
+
             try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(YML_PATH), "UTF-8")) {
                 writer.write(ymlContent);
             }
@@ -321,6 +481,59 @@ public class ConfigEditor extends JFrame {
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this, "保存 application.yml 失败: " + e.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    private String replaceYmlList(String content, String key, List<String> newValues) {
+        String[] lines = content.split("\n", -1);
+        StringBuilder result = new StringBuilder();
+        boolean replaced = false;
+        for (int i = 0; i < lines.length; ) {
+            String line = lines[i];
+            String trimmed = line.trim();
+            if (!replaced && trimmed.startsWith(key)) {
+                // keep the key line
+                result.append(line).append("\n");
+                i++;
+                // detect indent from existing items if present
+                String itemIndent = "  ";
+                while (i < lines.length) {
+                    String l = lines[i];
+                    String t = l.trim();
+                    if (t.startsWith("-")) {
+                        int dash = l.indexOf("-");
+                        if (dash > 0) itemIndent = l.substring(0, dash);
+                        i++;
+                    } else if (t.isEmpty()) {
+                        i++;
+                    } else {
+                        int indent = l.indexOf(l.trim());
+                        int keyIndent = line.indexOf(line.trim());
+                        if (indent <= keyIndent) break;
+                        else break;
+                    }
+                }
+                // append new values
+                for (String v : newValues) {
+                    String out = v;
+                    if (!((out.startsWith("\"") && out.endsWith("\"")) || (out.startsWith("'") && out.endsWith("'")))) {
+                        out = "\"" + out + "\"";
+                    }
+                    result.append(itemIndent).append("- ").append(out).append("\n");
+                }
+                replaced = true;
+                continue;
+            } else {
+                result.append(line).append("\n");
+                i++;
+            }
+        }
+        if (!replaced) {
+            result.append("\n").append(key).append("\n");
+            for (String v : newValues) {
+                result.append("  - \"").append(v).append("\"\n");
+            }
+        }
+        return result.toString();
     }
 
     private String replaceYmlValue(String content, String key, String newValue) {

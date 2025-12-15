@@ -31,6 +31,32 @@ spring:
     init:
       mode: never
 
+# 安全配置
+security:
+  # IP白名单配置 - 只允许本地和指定IP访问
+  ip-whitelist-enabled: true  # 是否启用IP白名单过滤，生产环境建议设置为 true
+  # IP白名单列表 - 允许访问的IP地址
+  ip-whitelist:
+    - 127.0.0.1           # IPv4 本地环回
+    - ::1                 # IPv6 本地环回
+    - localhost           # 本地主机名
+    - 0:0:0:0:0:0:0:1    # IPv6 完整形式
+    - 999.999.999.999     # 指定服务器IP
+
+  
+  # Pass Token配置 - 通过令牌绕过IP白名单限制
+  pass-token-enabled: true  # 是否启用pass_token功能，生产环境建议设置为 true
+  # Pass Token列表 - 允许通过的令牌（可以绕过IP白名单）
+  pass-tokens:
+    - "00000"   
+    - "AAAA"   
+    # 令牌可以通过以下方式在请求中传递：
+    # 1. Authorization header: "Authorization: Bearer your-secret-token-1"
+    # 2. Custom header: "X-Pass-Token: your-secret-token-1"
+    # 3. Query parameter: "/api/endpoint?pass_token=your-secret-token-1"
+
+
+
 # CORS 跨域配置
 # cors:
 #   # 允许的源（多个用逗号分隔）
