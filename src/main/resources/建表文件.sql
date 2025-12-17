@@ -51,3 +51,14 @@ CREATE TABLE get_tweets (
     -- 推文文本内容，使用TEXT存储
        text VARCHAR(2550) comment '推文内容'
 )comment '推文获取表';
+
+
+###########################
+-- 创建用于记录API调用日志
+CREATE TABLE api_log (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY COMMENT '主键ID，自增',
+    ip VARCHAR(45) NOT NULL COMMENT '访问者IP地址',
+    api VARCHAR(255) NOT NULL COMMENT '访问路径',
+    states INT NOT NULL COMMENT '状态',
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '访问时间'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='访问日志表';
