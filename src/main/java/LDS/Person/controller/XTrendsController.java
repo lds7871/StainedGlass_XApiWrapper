@@ -1,5 +1,6 @@
 package LDS.Person.controller;
 
+import LDS.Person.config.TwitterTokenHelper;
 import LDS.Person.dto.request.NewsSearchRequest;
 import LDS.Person.dto.response.NewsResponse;
 import LDS.Person.dto.response.TrendResponse;
@@ -52,6 +53,9 @@ public class XTrendsController {
 
     @Autowired
     private RestTemplate restTemplate;
+    
+    @Autowired
+    private TwitterTokenHelper twitterTokenHelper;
 
     private static final String TWITTER_API_BASE = "https://api.x.com/2";
 
@@ -62,18 +66,8 @@ public class XTrendsController {
     @ApiOperation(value = "获取个性化趋势", notes = "获取当前认证用户的个性化趋势")
     public ResponseEntity<TrendResponse> getPersonalizedTrends() {
         try {
-            // 1. 获取 DefaultUID
-            String userId = getDefaultUserId();
-            log.info("收到获取个性化趋势请求，使用 DefaultUID: {}", userId);
-
-            // 2. 从数据库获取该用户的 Token
-            TwitterToken twitterToken = twitterTokenService.getByUserId(userId);
-            
-            // 3. 如果指定用户的 Token 不存在，尝试获取数据库中任意可用的 Token (Fallback)
-            if (twitterToken == null) {
-                log.warn("未找到用户 {} 的 Token，尝试获取数据库中任意可用的 Token", userId);
-                twitterToken = getLatestValidToken();
-            }
+            // 使用 TwitterTokenHelper 获取 Token（带回退机制）
+            TwitterToken twitterToken = twitterTokenHelper.getTokenWithFallback();
             
             if (twitterToken == null || twitterToken.getAccessToken() == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -152,15 +146,8 @@ public class XTrendsController {
             String query = request.getQuery().trim();
             log.info("收到搜索新闻请求，关键词: {}", query);
 
-            // 2. 从数据库获取该用户的 Token
-            String userId = getDefaultUserId();
-            TwitterToken twitterToken = twitterTokenService.getByUserId(userId);
-
-            // 3. 如果指定用户的 Token 不存在，尝试获取数据库中任意可用的 Token (Fallback)
-            if (twitterToken == null) {
-                log.warn("未找到用户 {} 的 Token，尝试获取数据库中任意可用的 Token", userId);
-                twitterToken = getLatestValidToken();
-            }
+            // 使用 TwitterTokenHelper 获取 Token（带回退机制）
+            TwitterToken twitterToken = twitterTokenHelper.getTokenWithFallback();
 
             if (twitterToken == null || twitterToken.getAccessToken() == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -298,39 +285,4 @@ public class XTrendsController {
     //     }
     // }
 
-    private String getDefaultUserId() {
-        Properties props = new Properties();
-        try (InputStream input = getClass().getClassLoader().getResourceAsStream("config.properties")) {
-            if (input != null) {
-                props.load(input);
-            }
-        } catch (Exception e) {
-            log.warn("读取 config.properties 失败: {}", e.getMessage());
-        }
-        return props.getProperty("DefaultUID", "000000000");
-    }
-
-    /**
-     * 从数据库获取最新的有效 Token
-     */
-    private TwitterToken getLatestValidToken() {
-        try {
-            List<TwitterToken> allTokens = twitterTokenRepository.findAll();
-            if (allTokens == null || allTokens.isEmpty()) {
-                return null;
-            }
-            return allTokens.stream()
-                    .max((t1, t2) -> {
-                        java.time.Instant time1 = t1.getUpdatedAt() != null ? t1.getUpdatedAt()
-                                : java.time.Instant.EPOCH;
-                        java.time.Instant time2 = t2.getUpdatedAt() != null ? t2.getUpdatedAt()
-                                : java.time.Instant.EPOCH;
-                        return time1.compareTo(time2);
-                    })
-                    .orElse(null);
-        } catch (Exception e) {
-            log.error("获取最新 Token 失败", e);
-            return null;
-        }
-    }
 }

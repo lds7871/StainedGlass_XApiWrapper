@@ -1,5 +1,7 @@
 package LDS.Person.controller;
 
+import LDS.Person.config.ConfigManager;
+import LDS.Person.config.TwitterTokenHelper;
 import LDS.Person.dto.request.UploadLocalMediaRequest;
 import LDS.Person.dto.request.UploadFileMediaRequest;
 import LDS.Person.dto.response.UploadMediaResponse;
@@ -55,6 +57,9 @@ public class XUploadController {
 
     @Autowired
     private RestTemplate restTemplate;
+    
+    @Autowired
+    private TwitterTokenHelper twitterTokenHelper;
 
     /**
      * 上传本地媒体文件（从 config.properties 的 saveimgdir 目录随机选择一个 PNG 文件）
@@ -79,22 +84,14 @@ public class XUploadController {
             String mediaCategory = request.getMediaCategory() != null ? request.getMediaCategory() : "tweet_image";
             String mediaType = request.getMediaType() != null ? request.getMediaType() : "image/png";
             
-            // 从 config.properties 获取默认 UID
-            Properties props = new Properties();
-            try (InputStream input = getClass().getClassLoader().getResourceAsStream("config.properties")) {
-                if (input != null) {
-                    props.load(input);
-                }
-            } catch (java.io.IOException e) {
-                log.warn("读取 config.properties 失败: {}", e.getMessage());
-            }
-            String userId = props.getProperty("DefaultUID", "0000000");
+            // 使用 TwitterTokenHelper 获取默认 UID 和 Token
+            String userId = twitterTokenHelper.getDefaultUserId();
             
             log.info("收到上传本地媒体请求，userId（来自 config.properties）: {}, mediaCategory: {}, mediaType: {}", 
                     userId, mediaCategory, mediaType);
             
             // 从数据库获取该用户的 Token
-            TwitterToken twitterToken = twitterTokenService.getByUserId(userId);
+            TwitterToken twitterToken = twitterTokenHelper.getDefaultUserToken();
             if (twitterToken == null || twitterToken.getAccessToken() == null) {
                 UploadMediaResponse resp = UploadMediaResponse.unauthorized("未找到该用户的 access_token，请先登录授权");
                 log.error("未能从数据库获取用户 {} 的 token", userId);
@@ -115,7 +112,7 @@ public class XUploadController {
             }
             
             // 从 config.properties 读取 saveimgdir 目录
-            String saveImgDir = props.getProperty("saveimgdir");
+            String saveImgDir = ConfigManager.getInstance().getString("saveimgdir", "");
             File saveImgFolder = new File(saveImgDir);
             
             if (!saveImgFolder.exists() || !saveImgFolder.isDirectory()) {
@@ -263,22 +260,14 @@ public class XUploadController {
             String mediaCategory = request.getMediaCategory() != null ? request.getMediaCategory() : "tweet_image";
             String mediaType = request.getMediaType() != null ? request.getMediaType() : "image/png";
             
-            // 从 config.properties 获取默认 UID
-            Properties props = new Properties();
-            try (InputStream input = getClass().getClassLoader().getResourceAsStream("config.properties")) {
-                if (input != null) {
-                    props.load(input);
-                }
-            } catch (java.io.IOException e) {
-                log.warn("读取 config.properties 失败: {}", e.getMessage());
-            }
-            String userId = props.getProperty("DefaultUID", "0000000");
+            // 使用 TwitterTokenHelper 获取默认 UID 和 Token
+            String userId = twitterTokenHelper.getDefaultUserId();
             
             log.info("收到上传文件媒体请求，userId（来自 config.properties）: {}，filePath: {}，mediaCategory: {}，mediaType: {}", 
                     userId, filePath, mediaCategory, mediaType);
             
             // 从数据库获取该用户的 Token
-            TwitterToken twitterToken = twitterTokenService.getByUserId(userId);
+            TwitterToken twitterToken = twitterTokenHelper.getDefaultUserToken();
             if (twitterToken == null || twitterToken.getAccessToken() == null) {
                 UploadMediaResponse resp = UploadMediaResponse.unauthorized("未找到该用户的 access_token，请先登录授权");
                 log.error("未能从数据库获取用户 {} 的 token", userId);
@@ -470,15 +459,8 @@ public class XUploadController {
                 return m2.getCreateTime().compareTo(m1.getCreateTime());
             });
             
-            //配置文件读取ediagetlimit
-            Properties props = new Properties();
-            try (InputStream input = getClass().getClassLoader().getResourceAsStream("config.properties")) {
-                if (input != null) {
-                    props.load(input);
-                }
-            }
-            int mediagetlimit = Integer.parseInt(props.getProperty("mediagetlimit", "20"));
-            int limit = mediagetlimit;
+            // 配置文件读取 mediagetlimit
+            int limit = ConfigManager.getInstance().getInt("mediagetlimit", 20);
             List<MediaLibrary> topRecords = mediaList.size() > limit 
                     ? mediaList.subList(0, limit) 
                     : mediaList;

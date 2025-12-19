@@ -1,5 +1,6 @@
 package LDS.Person.controller;
 
+import LDS.Person.config.TwitterTokenHelper;
 import LDS.Person.dto.request.TweetDetailRequest;
 import LDS.Person.dto.response.TweetDetailResponse;
 import LDS.Person.entity.TwitterToken;
@@ -43,30 +44,14 @@ public class XGetTweetController {
 
     @Autowired
     private GetTweetStorageService getTweetStorageService;
+    
+    @Autowired
+    private TwitterTokenHelper twitterTokenHelper;
 
     /**
      * Twitter API 基础 URL
      */
     private static final String TWITTER_API_BASE = "https://api.x.com/2";
-
-    /**
-     * 从 config.properties 读取 DefaultUID
-     */
-    private String getDefaultUserId() {
-        Properties props = new Properties();
-        try (InputStream input = getClass().getClassLoader().getResourceAsStream("config.properties")) {
-            if (input != null) {
-                try {
-                    props.load(input);
-                } catch (java.io.IOException e) {
-                    log.warn("读取 config.properties 失败: {}", e.getMessage());
-                }
-            }
-        } catch (Exception e) {
-            log.warn("打开 config.properties 失败: {}", e.getMessage());
-        }
-        return props.getProperty("DefaultUID", "000000000");
-    }
 
     /**
      * 获取用户最近的推文列表（5）
@@ -100,7 +85,7 @@ public class XGetTweetController {
         }
 
         String effectiveUserId = resolveUserId(request.getUserId());
-        TwitterToken latestToken = getLatestValidToken();
+        TwitterToken latestToken = twitterTokenHelper.getLatestValidToken();
         if (latestToken == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(TweetDetailResponse.error("未找到数据库中的有效 Token"));
@@ -154,7 +139,7 @@ public class XGetTweetController {
             String effectiveUserId = resolveUserId(userIdParam);
             log.info("收到获取推文请求，目标用户 ID: {}", effectiveUserId);
 
-            TwitterToken latestToken = getLatestValidToken();
+            TwitterToken latestToken = twitterTokenHelper.getLatestValidToken();
             if (latestToken == null) {
                 response.put("code", 401);
                 response.put("message", "未找到数据库中的有效 Token");
@@ -210,7 +195,7 @@ public class XGetTweetController {
 
     private String resolveUserId(String providedUserId) {
         if (providedUserId == null || providedUserId.isBlank()) {
-            String defaultUserId = getDefaultUserId();
+            String defaultUserId = twitterTokenHelper.getDefaultUserId();
             log.info("userId 未指定，从 config.properties 读取到 DefaultUID: {}", defaultUserId);
             return defaultUserId;
         }
@@ -367,30 +352,6 @@ public class XGetTweetController {
 
         } catch (Exception e) {
             log.error("获取推文详情失败", e);
-            return null;
-        }
-    }
-
-    /**
-     * 从数据库获取最新的有效 Token
-     */
-    private TwitterToken getLatestValidToken() {
-        try {
-            List<TwitterToken> allTokens = twitterTokenRepository.findAll();
-            if (allTokens == null || allTokens.isEmpty()) {
-                return null;
-            }
-            return allTokens.stream()
-                    .max((t1, t2) -> {
-                        java.time.Instant time1 = t1.getUpdatedAt() != null ? t1.getUpdatedAt()
-                                : java.time.Instant.EPOCH;
-                        java.time.Instant time2 = t2.getUpdatedAt() != null ? t2.getUpdatedAt()
-                                : java.time.Instant.EPOCH;
-                        return time1.compareTo(time2);
-                    })
-                    .orElse(null);
-        } catch (Exception e) {
-            log.error("Failed to get latest Token", e);
             return null;
         }
     }

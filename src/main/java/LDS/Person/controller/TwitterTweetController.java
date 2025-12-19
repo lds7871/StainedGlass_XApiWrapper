@@ -1,5 +1,6 @@
 package LDS.Person.controller;
 
+import LDS.Person.config.TwitterTokenHelper;
 import LDS.Person.dto.request.CreateTweetRequest;
 import LDS.Person.dto.request.QuoteTweetRequest;
 import LDS.Person.dto.response.CreateTweetResponse;
@@ -52,6 +53,9 @@ public class TwitterTweetController {
 
     @Autowired
     private RestTemplate restTemplate;
+    
+    @Autowired
+    private TwitterTokenHelper twitterTokenHelper;
 
     private static final String TWITTER_API_BASE = "https://api.x.com/2";
 
@@ -76,21 +80,13 @@ public class TwitterTweetController {
                 return ResponseEntity.badRequest().body(response);
             }
             
-            // 从 config.properties 获取默认 UID
-            Properties props = new Properties();
-            try (InputStream input = getClass().getClassLoader().getResourceAsStream("config.properties")) {
-                if (input != null) {
-                    props.load(input);
-                }
-            } catch (java.io.IOException e) {
-                log.warn("读取 config.properties 失败: {}", e.getMessage());
-            }
-            String userId = props.getProperty("DefaultUID", "0000000");
+            // 使用 TwitterTokenHelper 获取默认用户 ID 和 Token
+            String userId = twitterTokenHelper.getDefaultUserId();
             
             log.info("收到创建推文请求，userId: {}（来自 config.properties），文本长度: {}", userId, request.getText().length());
             
             // 从数据库获取该用户的 access_token
-            TwitterToken twitterToken = twitterTokenService.getByUserId(userId);
+            TwitterToken twitterToken = twitterTokenHelper.getDefaultUserToken();
             if (twitterToken == null || twitterToken.getAccessToken() == null) {
                 response.put("code", 401);
                 response.put("message", "未找到该用户的 access_token，请重新登录");
@@ -148,21 +144,13 @@ public class TwitterTweetController {
                 return ResponseEntity.badRequest().body(response);
             }
             
-            // 从 config.properties 获取默认 UID
-            Properties props = new Properties();
-            try (InputStream input = getClass().getClassLoader().getResourceAsStream("config.properties")) {
-                if (input != null) {
-                    props.load(input);
-                }
-            } catch (java.io.IOException e) {
-                log.warn("读取 config.properties 失败: {}", e.getMessage());
-            }
-            String userId = props.getProperty("DefaultUID", "0000000");
+            // 使用 TwitterTokenHelper 获取默认用户 ID 和 Token
+            String userId = twitterTokenHelper.getDefaultUserId();
             
             log.info("收到创建带媒体推文请求，userId: {}（来自 config.properties），文本长度: {}", userId, request.getText().length());
             
             // 从数据库获取该用户的 access_token
-            TwitterToken twitterToken = twitterTokenService.getByUserId(userId);
+            TwitterToken twitterToken = twitterTokenHelper.getDefaultUserToken();
             if (twitterToken == null || twitterToken.getAccessToken() == null) {
                 response.put("code", 401);
                 response.put("message", "未找到该用户的 access_token，请重新登录");
@@ -271,22 +259,14 @@ public class TwitterTweetController {
                 return ResponseEntity.badRequest().body(resp);
             }
 
-            // 从 config.properties 获取默认 UID
-            Properties props = new Properties();
-            try (InputStream input = getClass().getClassLoader().getResourceAsStream("config.properties")) {
-                if (input != null) {
-                    props.load(input);
-                }
-            } catch (java.io.IOException e) {
-                log.warn("读取 config.properties 失败: {}", e.getMessage());
-            }
-            String userId = props.getProperty("DefaultUID", "0000000");
+            // 使用 TwitterTokenHelper 获取默认用户 ID 和 Token
+            String userId = twitterTokenHelper.getDefaultUserId();
 
             log.info("收到引用推文请求，userId: {}（来自 config.properties），Text: {}，quote_tweet_id: {}", 
                      userId, request.getText(), request.getQuote_tweet_id());
 
             // 从数据库获取该用户的 access_token
-            TwitterToken twitterToken = twitterTokenService.getByUserId(userId);
+            TwitterToken twitterToken = twitterTokenHelper.getDefaultUserToken();
             if (twitterToken == null || twitterToken.getAccessToken() == null) {
                 QuoteTweetResponse resp = QuoteTweetResponse.unauthorized("未找到该用户的 access_token，请先登录授权");
                 log.error("未能从数据库获取用户 {} 的 token", userId);

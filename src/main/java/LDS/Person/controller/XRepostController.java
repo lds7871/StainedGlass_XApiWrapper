@@ -2,6 +2,7 @@ package LDS.Person.controller;
 
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
+import LDS.Person.config.TwitterTokenHelper;
 import LDS.Person.entity.TwitterToken;
 import LDS.Person.service.TwitterTokenService;
 import LDS.Person.dto.request.RepostRequest;
@@ -42,6 +43,9 @@ public class XRepostController {
 
     @Autowired
     private RestTemplate restTemplate;
+    
+    @Autowired
+    private TwitterTokenHelper twitterTokenHelper;
 
     private static final String TWITTER_API_BASE = "https://api.x.com/2";
 
@@ -58,17 +62,6 @@ public class XRepostController {
     )
     public ResponseEntity<RepostResponse> repostTweet(@RequestBody RepostRequest request) {
         try {
-            // 从 config.properties 获取默认 UID
-            Properties props = new Properties();
-            try (InputStream input = getClass().getClassLoader().getResourceAsStream("config.properties")) {
-                if (input != null) {
-                    props.load(input);
-                }
-            } catch (java.io.IOException e) {
-                log.warn("读取 config.properties 失败: {}", e.getMessage());
-            }
-            String userId = props.getProperty("DefaultUID", "0000000");
-
             // 验证请求
             if (request == null || request.getTweetId() == null || request.getTweetId().isBlank()) {
                 RepostResponse resp = RepostResponse.badRequest("tweetId 不能为空");
@@ -77,11 +70,13 @@ public class XRepostController {
             }
 
             String tweetId = request.getTweetId();
-
+            
+            // 使用 TwitterTokenHelper 获取默认用户 ID 和 Token
+            String userId = twitterTokenHelper.getDefaultUserId();
             log.info("收到转发请求，userId: {}（来自 config.properties），tweetId: {}", userId, tweetId);
 
             // 从数据库获取用户的 Token
-            TwitterToken twitterToken = twitterTokenService.getByUserId(userId);
+            TwitterToken twitterToken = twitterTokenHelper.getDefaultUserToken();
             if (twitterToken == null || twitterToken.getAccessToken() == null) {
                 RepostResponse resp = RepostResponse.unauthorized("未找到该用户的 access_token，请先登录授权");
                 log.error("未能从数据库获取用户 {} 的 token", userId);
