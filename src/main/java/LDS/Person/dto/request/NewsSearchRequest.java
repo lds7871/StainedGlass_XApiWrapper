@@ -25,6 +25,6 @@ public class NewsSearchRequest {
     @ApiModelProperty(value = "返回结果数量（10-100）", example = "10")
     private Integer maxResults;
 
-    @ApiModelProperty(value = "语言代码", example = "en")
+    @ApiModelProperty(value = "语言代码（en）", example = "en")
     private String lang;
 }
