@@ -53,11 +53,12 @@ public class SecurityConfig implements WebMvcConfigurer {
     }
 
     /**
-     * 注册IP白名单拦截器
+     * 注册IP白名单拦截器和请求日志拦截器
      * 拦截器会检查所有controller请求，但可以通过@BypassIpWhitelist注解绕过
      */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        // 注册IP白名单拦截器
         IpWhitelistInterceptor interceptor = ipWhitelistInterceptorProvider.getIfAvailable();
         if (interceptor != null) {
             registry.addInterceptor(interceptor)

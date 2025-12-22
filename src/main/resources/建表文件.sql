@@ -62,3 +62,12 @@ CREATE TABLE api_log (
     states INT NOT NULL COMMENT '状态',
     create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '访问时间'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='访问日志表';
+
+###########################
+-- 创建用于存储通过的API原始日志的表
+CREATE TABLE api_raw_logs (
+    api_raw_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '自增主键',
+    raw_json JSON NOT NULL COMMENT '原始JSON内容',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '记录创建时间',
+    PRIMARY KEY (api_raw_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='API原始日志存储表';
