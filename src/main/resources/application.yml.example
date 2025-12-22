@@ -57,18 +57,6 @@ security:
 
 
 
-# CORS 跨域配置
-# cors:
-#   # 允许的源（多个用逗号分隔）
-#   allowed-origins: https://xxx.top
-#   # 允许的 HTTP 方法
-#   allowed-methods: GET,POST,PUT,DELETE,OPTIONS
-#   # 允许的请求头
-#   allowed-headers: "*"
-#   # 是否允许凭证（cookies、authorization headers）
-#   allow-credentials: true
-#   # 预检请求的缓存时间（秒）
-#   max-age: 3600
 
 # Twitter OAuth 2.0 配置
 # 请到 https://developer.twitter.com/en/portal/dashboard 获取这些凭证
