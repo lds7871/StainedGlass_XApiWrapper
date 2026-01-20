@@ -4,6 +4,7 @@ import LDS.Person.config.TwitterApiClient;
 import LDS.Person.config.TwitterApiClient.TwitterTokenResponse;
 import LDS.Person.config.TwitterApiClient.TwitterUserInfo;
 import LDS.Person.config.OAuthStateStore;
+import LDS.Person.config.ConfigManager;
 import LDS.Person.dto.request.TwitterCallbackRequest;
 import LDS.Person.dto.response.TwitterAuthorizationState;
 import LDS.Person.dto.response.TwitterCallbackResponse;
@@ -41,10 +42,11 @@ public class TwitterCallbackServiceImpl implements TwitterCallbackService {
     public TwitterCallbackResponse handleCallback(TwitterCallbackRequest request) {
         try {
             log.info("\n🔍 ============= 开始处理 Twitter OAuth 回调 =============");
-            
+
             // 调试：记录所有接收到的参数
             log.info("📥 收到的回调请求参数:");
-            log.info("   • code: {}", request.getCode() != null ? "[已接收，长度: " + request.getCode().length() + "]" : "[null]");
+            log.info("   • code: {}",
+                    request.getCode() != null ? "[已接收，长度: " + request.getCode().length() + "]" : "[null]");
             log.info("   • state: {}", request.getState());
             log.info("   • error: {}", request.getError());
             log.info("   • error_description: {}", request.getError_description());
@@ -119,20 +121,23 @@ public class TwitterCallbackServiceImpl implements TwitterCallbackService {
                 log.info("❌ 返回错误响应\n");
                 return response;
             }
-            log.info("✅ access token 已获取: {}...", tokenResponse.getAccessToken().substring(0, Math.min(20, tokenResponse.getAccessToken().length())));
+            log.info("✅ access token 已获取: {}...",
+                    tokenResponse.getAccessToken().substring(0, Math.min(20, tokenResponse.getAccessToken().length())));
 
             // ✅ 保存 access token 到 Session
-            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder
+                    .getRequestAttributes();
             if (attributes != null) {
                 HttpSession session = attributes.getRequest().getSession();
                 session.setAttribute("accessToken", tokenResponse.getAccessToken());
                 // 标记这是首次授权（Session 中）- 告诉过滤器不要从数据库读取旧数据
                 session.setAttribute("isFirstTimeAuth", true);
-                log.info("💾 Access token 已保存到 Session, session ID: {}, token: {}...", 
-                    session.getId(), 
-                    tokenResponse.getAccessToken().substring(0, Math.min(20, tokenResponse.getAccessToken().length())));
+                log.info("💾 Access token 已保存到 Session, session ID: {}, token: {}...",
+                        session.getId(),
+                        tokenResponse.getAccessToken().substring(0,
+                                Math.min(20, tokenResponse.getAccessToken().length())));
                 log.info("📌 标记首次授权状态 (isFirstTimeAuth=true)");
-                
+
                 // 验证保存是否成功
                 Object retrieved = session.getAttribute("accessToken");
                 if (retrieved != null) {
@@ -170,7 +175,7 @@ public class TwitterCallbackServiceImpl implements TwitterCallbackService {
             log.info("🗑️  清除数据库中用户 {} 的旧 token...", userInfo.getId());
             twitterTokenService.deleteByUserId(userInfo.getId());
             log.info("✅ 旧 token 已清除");
-            
+
             TwitterToken token = new TwitterToken();
             token.setTwitterUserId(userInfo.getId());
             token.setAccessToken(tokenResponse.getAccessToken());
@@ -183,6 +188,38 @@ public class TwitterCallbackServiceImpl implements TwitterCallbackService {
             twitterTokenService.save(token);
             log.info("💾 新 token 已保存到数据库，userId={}, 过期时间: {}", userInfo.getId(), token.getExpiresAt());
 
+            // ✅ [新增] 同时为配置的 DefaultUID 用户保存 token（如果配置了且不是当前认证用户）
+            String defaultUserId = ConfigManager.getInstance().getString("DefaultUID", null);
+            if (defaultUserId != null && !defaultUserId.isEmpty()) {
+                log.info("🔄 检测到配置的默认用户 ID: {}", defaultUserId);
+                try {
+                    if (!defaultUserId.equals(userInfo.getId())) {
+                        log.info("📝 为默认用户 {} 创建/更新 token...", defaultUserId);
+                        // 先清除旧 token
+                        twitterTokenService.deleteByUserId(defaultUserId);
+
+                        // 创建新的 token
+                        TwitterToken defaultToken = new TwitterToken();
+                        defaultToken.setTwitterUserId(defaultUserId);
+                        defaultToken.setAccessToken(tokenResponse.getAccessToken());
+                        defaultToken.setRefreshToken(tokenResponse.getRefreshToken());
+                        defaultToken.setTokenType(tokenResponse.getTokenType());
+                        defaultToken.setScope("tweet.read tweet.write users.read offline.access");
+                        if (tokenResponse.getExpiresIn() != null && tokenResponse.getExpiresIn() > 0) {
+                            defaultToken.setExpiresAt(Instant.now().plusSeconds(tokenResponse.getExpiresIn()));
+                        }
+                        twitterTokenService.save(defaultToken);
+                        log.info("✅ 成功为默认用户 {} 保存 token", defaultUserId);
+                    } else {
+                        log.info("ℹ️  DefaultUID 与认证用户 ID 相同，无需重复保存");
+                    }
+                } catch (NumberFormatException e) {
+                    log.warn("⚠️  DefaultUID 格式错误（非数字）: {}", defaultUserId);
+                } catch (Exception e) {
+                    log.warn("⚠️  为默认用户保存 token 时出错: {}", e.getMessage());
+                }
+            }
+
             log.info("🎉 Twitter 用户成功认证: userId={}, username={}", userInfo.getId(), userInfo.getUsername());
 
             TwitterCallbackResponse response = TwitterCallbackResponse.builder()
@@ -193,7 +230,7 @@ public class TwitterCallbackServiceImpl implements TwitterCallbackService {
                     .displayName(userInfo.getName())
                     .accessToken(tokenResponse.getAccessToken())
                     .build();
-            
+
             log.info("✅ 返回成功响应\n");
             return response;
 

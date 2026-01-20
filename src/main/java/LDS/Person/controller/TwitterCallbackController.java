@@ -54,20 +54,20 @@ public class TwitterCallbackController {
             log.info("生成 Twitter OAuth 授权 URL");
 
             // 生成 state（CSRF 防护）
-        TwitterAuthorizationState authorizationState = twitterCallbackService.generateAuthorizationState();
+            TwitterAuthorizationState authorizationState = twitterCallbackService.generateAuthorizationState();
 
-        // 生成授权 URL（使用 PKCE）
-        String authUrl = twitterApiClient.generateAuthorizationUrl(
-            authorizationState.getState(),
-            authorizationState.getCodeChallenge());
+            // 生成授权 URL（使用 PKCE）
+            String authUrl = twitterApiClient.generateAuthorizationUrl(
+                    authorizationState.getState(),
+                    authorizationState.getCodeChallenge());
 
             Map<String, Object> response = new HashMap<>();
             response.put("code", 200);
             response.put("message", "授权 URL 生成成功");
             response.put("authorizationUrl", authUrl);
-        response.put("state", authorizationState.getState());
-        response.put("codeChallenge", authorizationState.getCodeChallenge());
-        response.put("codeChallengeMethod", authorizationState.getCodeChallengeMethod());
+            response.put("state", authorizationState.getState());
+            response.put("codeChallenge", authorizationState.getCodeChallenge());
+            response.put("codeChallengeMethod", authorizationState.getCodeChallengeMethod());
 
             log.info("授权 URL 生成完成");
             logJsonResponse("授权 URL 响应", response);
@@ -106,38 +106,47 @@ public class TwitterCallbackController {
             @RequestParam(required = false) String error,
             @RequestParam(required = false, name = "error_description") String errorDescription) {
 
-        log.info("\n\n");
-        log.info("╔════════════════════════════════════════════════════════════════╗");
-        log.info("║          🔄 收到 Twitter OAuth 回调请求 (GET)                   ║");
-        log.info("╚════════════════════════════════════════════════════════════════╝");
-        log.info("📝 URL 参数详情:");
-        log.info("   • code: {}", code != null ? "[已接收，长度: " + code.length() + "]" : "[null]");
-        log.info("   • state: {}", state != null ? "[已接收]" : "[null]");
-        log.info("   • error: {}", error);
-        log.info("   • error_description: {}", errorDescription);
-        
-        log.debug("URL 参数完整值 - code: [{}], state: [{}], error: [{}], error_description: [{}]",
-                code, state, error, errorDescription);
+        try {
+            log.info("\n\n");
+            log.info("╔════════════════════════════════════════════════════════════════╗");
+            log.info("║          🔄 收到 Twitter OAuth 回调请求 (GET)                   ║");
+            log.info("╚════════════════════════════════════════════════════════════════╝");
+            log.info("📝 URL 参数详情:");
+            log.info("   • code: {}", code != null ? "[已接收，长度: " + code.length() + "]" : "[null]");
+            log.info("   • state: {}", state != null ? "[已接收]" : "[null]");
+            log.info("   • error: {}", error);
+            log.info("   • error_description: {}", errorDescription);
 
-        // 构建请求对象
-        TwitterCallbackRequest request = new TwitterCallbackRequest();
-        request.setCode(code);
-        request.setState(state);
-        request.setError(error);
-        request.setError_description(errorDescription);
+            log.debug("URL 参数完整值 - code: [{}], state: [{}], error: [{}], error_description: [{}]",
+                    code, state, error, errorDescription);
 
-        log.info("✅ 请求对象已构建");
-        log.debug("请求对象详情 - code: {}, state: {}, error: {}",
-                request.getCode(), request.getState(), request.getError());
+            // 构建请求对象
+            TwitterCallbackRequest request = new TwitterCallbackRequest();
+            request.setCode(code);
+            request.setState(state);
+            request.setError(error);
+            request.setError_description(errorDescription);
 
-        // 处理回调
-        TwitterCallbackResponse response = twitterCallbackService.handleCallback(request);
+            log.info("✅ 请求对象已构建");
+            log.debug("请求对象详情 - code: {}, state: {}, error: {}",
+                    request.getCode(), request.getState(), request.getError());
 
-        log.info("📤 Twitter 回调处理完成");
-        logJsonResponse("回调响应", convertResponseToMap(response));
-        log.info("✅ 回调处理结束\n");
+            // 处理回调
+            TwitterCallbackResponse response = twitterCallbackService.handleCallback(request);
 
-        return response;
+            log.info("📤 Twitter 回调处理完成");
+            logJsonResponse("回调响应", convertResponseToMap(response));
+            log.info("✅ 回调处理结束\n");
+
+            return response;
+        } catch (Exception e) {
+            log.error("❌ Twitter 回调处理异常", e);
+            TwitterCallbackResponse errorResponse = TwitterCallbackResponse.builder()
+                    .code(500)
+                    .message("回调处理异常: " + e.getMessage())
+                    .build();
+            return errorResponse;
+        }
     }
 
     private Map<String, Object> convertResponseToMap(TwitterCallbackResponse response) {
