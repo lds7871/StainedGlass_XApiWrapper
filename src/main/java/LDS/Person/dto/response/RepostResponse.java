@@ -1,7 +1,6 @@
 package LDS.Person.dto.response;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,19 +11,19 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@ApiModel(value = "RepostResponse", description = "转发推文响应")
+@Schema(name = "RepostResponse", description = "转发推文响应")
 public class RepostResponse {
 
-    @ApiModelProperty(value = "HTTP 状态码", example = "200")
+    @Schema(description = "HTTP 状态码", example = "200")
     private Integer code;
 
-    @ApiModelProperty(value = "响应消息", example = "转发成功")
+    @Schema(description = "响应消息", example = "转发成功")
     private String message;
 
-    @ApiModelProperty(value = "响应数据（转发结果）", example = "{\"retweeted\": true}")
+    @Schema(description = "响应数据（转发结果）", example = "{\"retweeted\": true}")
     private Object data;
 
-    @ApiModelProperty(value = "时间戳（毫秒）", example = "1704067200000")
+    @Schema(description = "时间戳（毫秒）", example = "1704067200000")
     private Long timestamp;
 
     public RepostResponse(Integer code, String message, Object data) {

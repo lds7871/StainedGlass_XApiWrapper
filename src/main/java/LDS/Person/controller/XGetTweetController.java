@@ -6,8 +6,8 @@ import LDS.Person.dto.response.TweetDetailResponse;
 import LDS.Person.entity.TwitterToken;
 import LDS.Person.repository.TwitterTokenRepository;
 import LDS.Person.service.GetTweetStorageService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +31,7 @@ import java.util.Properties;
  */
 @RestController
 @RequestMapping("/api/twitter/tweet/get")
-@Api(tags = "X 推文获取", description = "获取用户推文相关接口")
+@Tag(name = "X 推文获取", description = "获取用户推文相关接口")
 @Slf4j
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class XGetTweetController {
@@ -61,7 +61,7 @@ public class XGetTweetController {
      * @return 用户最近的 5 条推文
      */
     @GetMapping("/latest")
-    @ApiOperation(value = "获取最近的推文列表（5）", notes = "根据用户 ID 获取该用户最近发布的 5 条推文。仅使用数据库最新 Token 进行认证，userId 默认从 config.properties 的 DefaultUID 读取")
+    @Operation(summary = "获取最近的推文列表（5）", description = "根据用户 ID 获取该用户最近发布的 5 条推文。仅使用数据库最新 Token 进行认证，userId 默认从 config.properties 的 DefaultUID 读取")
     public ResponseEntity<Map<String, Object>> getLatestTweets(
             @RequestParam(required = false, name = "userId") String userId,
             HttpSession session) {
@@ -69,7 +69,7 @@ public class XGetTweetController {
     }
 
     @GetMapping("/latestsave")
-    @ApiOperation(value = "获取最近推文保存数据库", notes = "获取同 /latest 的数据并将推文写入 get_tweets 表，已有 tweet_id 不重复插入")
+    @Operation(summary = "获取最近推文保存数据库", description = "获取同 /latest 的数据并将推文写入 get_tweets 表，已有 tweet_id 不重复插入")
     public ResponseEntity<Map<String, Object>> getLatestTweetsAndStore(
             @RequestParam(required = false, name = "userId") String userId,
             HttpSession session) {
@@ -77,7 +77,7 @@ public class XGetTweetController {
     }
 
     @PostMapping("/detail")
-    @ApiOperation(value = "获取推文详情", notes = "根据推文 ID 获取单条推文的详细信息")
+    @Operation(summary = "获取推文详情", description = "根据推文 ID 获取单条推文的详细信息")
     public ResponseEntity<TweetDetailResponse> getTweetDetail(
             @RequestBody TweetDetailRequest request) {
         if (request == null || request.getTweetId() == null || request.getTweetId().isBlank()) {

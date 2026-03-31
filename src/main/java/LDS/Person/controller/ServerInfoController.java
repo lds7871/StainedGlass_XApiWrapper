@@ -1,7 +1,7 @@
 package LDS.Person.controller;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -23,7 +23,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/serverinfo")
-@Api(tags = "服务监控", description = "获取服务信息")
+@Tag(name = "服务监控", description = "获取服务信息")
 @Slf4j
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class ServerInfoController {
@@ -32,7 +32,7 @@ public class ServerInfoController {
      * 获取完整的 JVM 和系统概览
      */
     @GetMapping("/JVMoverview")
-    @ApiOperation(value = "获取JVM信息", notes = "返回 JVM 内存、系统信息、线程等所有信息的汇总")
+    @Operation(summary = "获取JVM信息", description = "返回 JVM 内存、系统信息、线程等所有信息的汇总")
     public ResponseEntity<Map<String, Object>> getOverview() {
         Map<String, Object> response = new HashMap<>();
         try {
@@ -86,7 +86,7 @@ public class ServerInfoController {
      * 获取服务启动时间与内存信息（轻量接口）
      */
     @GetMapping("/startup")
-    @ApiOperation(value = "服务启动与内存信息", notes = "返回应用启动时间、运行时长以及内存使用情况（MB）")
+    @Operation(summary = "服务启动与内存信息", description = "返回应用启动时间、运行时长以及内存使用情况（MB）")
     public ResponseEntity<Map<String, Object>> getStartupAndMemory() {
         Map<String, Object> response = new HashMap<>();
         try {

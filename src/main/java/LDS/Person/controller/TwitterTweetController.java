@@ -12,8 +12,8 @@ import LDS.Person.service.TwitterTokenService;
 import LDS.Person.service.MediaLibraryService;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
@@ -37,7 +37,7 @@ import java.io.InputStream;
  */
 @RestController
 @RequestMapping("/api/twitter/tweet")
-@Api(tags = "X 创建推文", description = "推文相关接口")
+@Tag(name = "X 创建推文", description = "推文相关接口")
 @Slf4j
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class TwitterTweetController {
@@ -66,7 +66,7 @@ public class TwitterTweetController {
      * @return 推文创建结果
      */
     @PostMapping("/create")
-    @ApiOperation(value = "创建推文", notes = "根据 config.properties 中的 DefaultUID 从数据库获取 access_token 创建推文")
+    @Operation(summary = "创建推文", description = "根据 config.properties 中的 DefaultUID 从数据库获取 access_token 创建推文")
     public ResponseEntity<Map<String, Object>> createTweet(
             @RequestBody CreateTweetRequest request) {
         
@@ -127,9 +127,8 @@ public class TwitterTweetController {
      */
 
     @PostMapping("/createformedia")
-    @ApiOperation(
-        value = "创建带有媒体的推文",
-        notes = "\"media\"字段自动上传，无需手动输入。根据 config.properties 中的 DefaultUID 从数据库获取 access_token，搜索表 media_library 中 endtime 比当前时间大的且 status=0 的媒体创建推文。"
+    @Operation(summary = "创建带有媒体的推文",
+        description = "\"media\"字段自动上传，无需手动输入。根据 config.properties 中的 DefaultUID 从数据库获取 access_token，搜索表 media_library 中 endtime 比当前时间大的且 status=0 的媒体创建推文。"
     )
     public ResponseEntity<Map<String, Object>> createTweetWithMedia(
             @RequestBody CreateTweetRequest request) {
@@ -240,9 +239,8 @@ public class TwitterTweetController {
      * 参考: https://docs.x.com/x-api/posts/create-post
      */
     @PostMapping("/quote")
-    @ApiOperation(
-        value = "引用推文",
-        notes = "根据 config.properties 中的 DefaultUID 从数据库获取 access_token 创建引用推文。请求JSON格式: {\"Text\": \"推文内容\", \"quote_tweet_id\": \"被引用的推文ID\"}"
+    @Operation(summary = "引用推文",
+        description = "根据 config.properties 中的 DefaultUID 从数据库获取 access_token 创建引用推文。请求JSON格式: {\"Text\": \"推文内容\", \"quote_tweet_id\": \"被引用的推文ID\"}"
     )
     public ResponseEntity<QuoteTweetResponse> quoteTweet(@RequestBody QuoteTweetRequest request) {
         try {
