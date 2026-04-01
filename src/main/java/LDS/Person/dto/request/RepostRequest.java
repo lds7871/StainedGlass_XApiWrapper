@@ -1,7 +1,6 @@
 package LDS.Person.dto.request;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -10,10 +9,10 @@ import lombok.NoArgsConstructor;
  */
 @Data
 @NoArgsConstructor
-@ApiModel(value = "RepostRequest", description = "转发推文请求")
+@Schema(name = "RepostRequest", description = "转发推文请求")
 public class RepostRequest {
 
-    @ApiModelProperty(value = "要转发的推文 ID", required = true, example = "1234567890")
+    @Schema(description = "要转发的推文 ID", requiredMode = Schema.RequiredMode.REQUIRED, example = "1234567890")
     private String tweetId;
 
     public RepostRequest(String tweetId) {

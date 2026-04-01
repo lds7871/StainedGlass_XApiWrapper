@@ -1,7 +1,6 @@
 package LDS.Person.dto.response;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,19 +11,19 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@ApiModel(value = "QuoteTweetResponse", description = "引用推文响应")
+@Schema(name = "QuoteTweetResponse", description = "引用推文响应")
 public class QuoteTweetResponse {
 
-    @ApiModelProperty(value = "HTTP 状态码", example = "200")
+    @Schema(description = "HTTP 状态码", example = "200")
     private Integer code;
 
-    @ApiModelProperty(value = "响应消息", example = "引用推文成功")
+    @Schema(description = "响应消息", example = "引用推文成功")
     private String message;
 
-    @ApiModelProperty(value = "响应数据（引用推文结果）", example = "{\"tweet_id\": \"1234567890\"}")
+    @Schema(description = "响应数据（引用推文结果）", example = "{\"tweet_id\": \"1234567890\"}")
     private Object data;
 
-    @ApiModelProperty(value = "时间戳（毫秒）", example = "1704067200000")
+    @Schema(description = "时间戳（毫秒）", example = "1704067200000")
     private Long timestamp;
 
     public QuoteTweetResponse(Integer code, String message, Object data) {

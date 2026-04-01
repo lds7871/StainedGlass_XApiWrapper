@@ -7,8 +7,8 @@ import LDS.Person.entity.TwitterToken;
 import LDS.Person.service.TwitterTokenService;
 import LDS.Person.dto.request.RepostRequest;
 import LDS.Person.dto.response.RepostResponse;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
@@ -33,7 +33,7 @@ import java.util.Properties;
  */
 @RestController
 @RequestMapping("/api/twitter/tweet/repost")
-@Api(tags = "X 转发", description = "转发/转推相关接口")
+@Tag(name = "X 转发", description = "转发/转推相关接口")
 @Slf4j
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class XRepostController {
@@ -56,9 +56,8 @@ public class XRepostController {
      * @return 转发结果
      */
     @PostMapping("/create")
-    @ApiOperation(
-        value = "转发一条推文",
-        notes = "根据请求体中的 tweetId 将推文转发到配置的用户账户（config.properties的DefaultUID读取）"
+    @Operation(summary = "转发一条推文",
+        description = "根据请求体中的 tweetId 将推文转发到配置的用户账户（config.properties的DefaultUID读取）"
     )
     public ResponseEntity<RepostResponse> repostTweet(@RequestBody RepostRequest request) {
         try {

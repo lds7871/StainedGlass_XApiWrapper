@@ -5,10 +5,10 @@ import LDS.Person.dto.request.TwitterCallbackRequest;
 import LDS.Person.dto.response.TwitterAuthorizationState;
 import LDS.Person.dto.response.TwitterCallbackResponse;
 import LDS.Person.service.TwitterCallbackService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -26,7 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 @RestController
 @RequestMapping("/callback/twitter")
-@Api(tags = "Twitter OAuth 回调")
+@Tag(name = "Twitter OAuth 回调")
 @Slf4j
 @RequiredArgsConstructor
 public class TwitterCallbackController {
@@ -44,10 +44,10 @@ public class TwitterCallbackController {
      * @return 包含授权 URL 和 state 的响应
      */
     @GetMapping("/authorize")
-    @ApiOperation(value = "生成 Twitter OAuth 授权 URL", notes = "返回授权 URL，用于重定向用户到 Twitter 授权页面")
+    @Operation(summary = "生成 Twitter OAuth 授权 URL", description = "返回授权 URL，用于重定向用户到 Twitter 授权页面")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "成功生成授权 URL"),
-            @ApiResponse(code = 500, message = "服务器错误")
+            @ApiResponse(responseCode = "200", description = "成功生成授权 URL"),
+            @ApiResponse(responseCode = "500", description = "服务器错误")
     })
     public Map<String, Object> generateAuthorizationUrl() {
         try {
@@ -93,12 +93,12 @@ public class TwitterCallbackController {
      * @return 认证结果
      */
     @GetMapping("/oauth")
-    @ApiOperation(value = "处理 Twitter OAuth 回调 (GET)", notes = "接收 Twitter 授权服务器的重定向，处理授权码")
+    @Operation(summary = "处理 Twitter OAuth 回调 (GET)", description = "接收 Twitter 授权服务器的重定向，处理授权码")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "认证成功，返回用户和 token 信息"),
-            @ApiResponse(code = 400, message = "请求参数错误或状态验证失败"),
-            @ApiResponse(code = 401, message = "用户拒绝授权"),
-            @ApiResponse(code = 500, message = "服务器处理错误")
+            @ApiResponse(responseCode = "200", description = "认证成功，返回用户和 token 信息"),
+            @ApiResponse(responseCode = "400", description = "请求参数错误或状态验证失败"),
+            @ApiResponse(responseCode = "401", description = "用户拒绝授权"),
+            @ApiResponse(responseCode = "500", description = "服务器处理错误")
     })
     public TwitterCallbackResponse handleCallbackGet(
             @RequestParam(required = false) String code,
@@ -189,10 +189,10 @@ public class TwitterCallbackController {
     // @ApiOperation(value = "处理 Twitter OAuth 回调 (POST)", notes = "接收 Twitter
     // 授权服务器的回调，进行状态验证和 token 交换")
     // @ApiResponses({
-    // @ApiResponse(code = 200, message = "认证成功，返回用户和 token 信息"),
-    // @ApiResponse(code = 400, message = "请求参数错误或状态验证失败"),
-    // @ApiResponse(code = 401, message = "用户拒绝授权"),
-    // @ApiResponse(code = 500, message = "服务器处理错误")
+    // @ApiResponse(responseCode = "200", description = "认证成功，返回用户和 token 信息"),
+    // @ApiResponse(responseCode = "400", description = "请求参数错误或状态验证失败"),
+    // @ApiResponse(responseCode = "401", description = "用户拒绝授权"),
+    // @ApiResponse(responseCode = "500", description = "服务器处理错误")
     // })
     // public TwitterCallbackResponse handleCallbackPost(@RequestBody
     // TwitterCallbackRequest request) {

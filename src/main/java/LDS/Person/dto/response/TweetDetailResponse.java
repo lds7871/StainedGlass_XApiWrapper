@@ -1,8 +1,7 @@
 package LDS.Person.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -11,16 +10,16 @@ import lombok.NoArgsConstructor;
  */
 @Data
 @NoArgsConstructor
-@ApiModel(value = "TweetDetailResponse", description = "单条推文详情")
+@Schema(name = "TweetDetailResponse", description = "单条推文详情")
 public class TweetDetailResponse {
 
-    @ApiModelProperty(value = "业务状态码")
+    @Schema(description = "业务状态码")
     private int code;
 
-    @ApiModelProperty(value = "响应信息")
+    @Schema(description = "响应信息")
     private String message;
 
-    @ApiModelProperty(value = "推文数据")
+    @Schema(description = "推文数据")
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private TweetDetailData data;
 
@@ -48,40 +47,40 @@ public class TweetDetailResponse {
 
     @Data
     @NoArgsConstructor
-    @ApiModel(value = "TweetDetailData", description = "推文详细信息")
+    @Schema(name = "TweetDetailData", description = "推文详细信息")
     public static class TweetDetailData {
 
-        @ApiModelProperty(value = "推文 ID")
+        @Schema(description = "推文 ID")
         private String id;
 
-        @ApiModelProperty(value = "推文文本")
+        @Schema(description = "推文文本")
         private String text;
 
-        @ApiModelProperty(value = "作者 ID")
+        @Schema(description = "作者 ID")
         private String authorId;
 
-        @ApiModelProperty(value = "创建时间")
+        @Schema(description = "创建时间")
         private String createdAt;
 
-        @ApiModelProperty(value = "公开指标")
+        @Schema(description = "公开指标")
         private TweetPublicMetrics publicMetrics;
     }
 
     @Data
     @NoArgsConstructor
-    @ApiModel(value = "TweetPublicMetrics", description = "推文公开指标")
+    @Schema(name = "TweetPublicMetrics", description = "推文公开指标")
     public static class TweetPublicMetrics {
 
-        @ApiModelProperty(value = "点赞数量")
+        @Schema(description = "点赞数量")
         private Integer likeCount;
 
-        @ApiModelProperty(value = "转推数量")
+        @Schema(description = "转推数量")
         private Integer retweetCount;
 
-        @ApiModelProperty(value = "引用数量")
+        @Schema(description = "引用数量")
         private Integer quoteCount;
 
-        @ApiModelProperty(value = "回复数量")
+        @Schema(description = "回复数量")
         private Integer replyCount;
     }
 }

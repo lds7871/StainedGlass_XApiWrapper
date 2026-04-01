@@ -10,8 +10,8 @@ import LDS.Person.entity.MediaLibrary;
 import LDS.Person.repository.TwitterTokenRepository;
 import LDS.Person.service.TwitterTokenService;
 import LDS.Person.service.MediaLibraryService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
@@ -41,7 +41,7 @@ import java.util.Random;
  */
 @RestController
 @RequestMapping("/api/x/media")
-@Api(tags = "X 媒体上传", description = "媒体上传接口")
+@Tag(name = "X 媒体上传", description = "媒体上传接口")
 @Slf4j
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class XUploadController {
@@ -68,9 +68,8 @@ public class XUploadController {
      * @return 媒体上传结果（包含 media_id, media_key 等）
      */
     @PostMapping("/upload-local")
-    @ApiOperation(
-        value = "上传本地媒体",
-        notes = "从 config.properties 的 saveimgdir 目录随机选择一个 PNG 文件，调用 Twitter /2/media/upload 接口上传媒体。使用 config.properties 的 DefaultUID 作为用户身份，从数据库获取其 Token 进行认证"
+    @Operation(summary = "上传本地媒体",
+        description = "从 config.properties 的 saveimgdir 目录随机选择一个 PNG 文件，调用 Twitter /2/media/upload 接口上传媒体。使用 config.properties 的 DefaultUID 作为用户身份，从数据库获取其 Token 进行认证"
     )
     public ResponseEntity<UploadMediaResponse> uploadLocalMedia(
             @RequestBody(required = false) UploadLocalMediaRequest request) {
@@ -241,9 +240,8 @@ public class XUploadController {
      * @return 媒体上传结果
      */
     @PostMapping("/upload-file")
-    @ApiOperation(
-        value = "上传指定路径的媒体",
-        notes = "上传指定路径的媒体文件到 Twitter，返回 media_id。支持本地文件路径和 URL。使用 config.properties 的 DefaultUID 作为用户身份，从数据库获取其 Token 进行认证"
+    @Operation(summary = "上传指定路径的媒体",
+        description = "上传指定路径的媒体文件到 Twitter，返回 media_id。支持本地文件路径和 URL。使用 config.properties 的 DefaultUID 作为用户身份，从数据库获取其 Token 进行认证"
     )
     public ResponseEntity<UploadMediaResponse> uploadFileMedia(
             @RequestBody UploadFileMediaRequest request) {
@@ -441,9 +439,8 @@ public class XUploadController {
      * 返回媒体库中的所有媒体信息（倒序排列，最多前 20 条）
      */
     @GetMapping("/list")
-    @ApiOperation(
-        value = "查询媒体记录列表",
-        notes = "返回媒体库中的媒体信息，按创建时间倒序排列，最多返回前 20 条记录"
+    @Operation(summary = "查询媒体记录列表",
+        description = "返回媒体库中的媒体信息，按创建时间倒序排列，最多返回前 20 条记录"
     )
     public ResponseEntity<Map<String, Object>> listAllMedia() {
         Map<String, Object> response = new HashMap<>();

@@ -10,9 +10,9 @@ import LDS.Person.service.TwitterTokenService;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
@@ -40,7 +40,7 @@ import java.util.Properties;
  */
 @RestController
 @RequestMapping("/api/twitter/trends")
-@Api(tags = "X 趋势", description = "获取趋势相关接口（需要Premium 订阅）")
+@Tag(name = "X 趋势", description = "获取趋势相关接口（需要Premium 订阅）")
 @Slf4j
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class XTrendsController {
@@ -63,7 +63,7 @@ public class XTrendsController {
      * 获取个性化趋势
      */
     @GetMapping("/personalized")
-    @ApiOperation(value = "获取个性化趋势", notes = "获取当前认证用户的个性化趋势")
+    @Operation(summary = "获取个性化趋势", description = "获取当前认证用户的个性化趋势")
     public ResponseEntity<TrendResponse> getPersonalizedTrends() {
         try {
             // 使用 TwitterTokenHelper 获取 Token（带回退机制）
@@ -132,9 +132,9 @@ public class XTrendsController {
      * 参考: https://docs.x.com/x-api/tweets/search/integrate/build-a-query
      */
     @PostMapping("/search-news")
-    @ApiOperation(value = "搜索新闻", notes = "基于关键词搜索相关新闻推文")
+    @Operation(summary = "搜索新闻", description = "基于关键词搜索相关新闻推文")
     public ResponseEntity<NewsResponse> searchNews(
-            @RequestBody @ApiParam(value = "新闻搜索请求", required = true) NewsSearchRequest request) {
+            @RequestBody @Parameter(description = "新闻搜索请求", required = true) NewsSearchRequest request) {
         try {
             // 1. 验证请求参数
             if (request == null || request.getQuery() == null || request.getQuery().trim().isEmpty()) {
@@ -263,9 +263,9 @@ public class XTrendsController {
     //  * 搜索新闻（简化版 - GET 方式）
     //  */
     // @GetMapping("/simple-search-news")
-    // @ApiOperation(value = "搜索新闻（GET）", notes = "基于关键词搜索相关新闻推文（简化版，使用 GET 请求）")
+    // @Operation(summary = "搜索新闻（GET）", description = "基于关键词搜索相关新闻推文（简化版，使用 GET 请求）")
     // public ResponseEntity<NewsResponse> searchNewsGet(
-    //         @ApiParam(value = "搜索关键词", required = true, example = "cryptocurrency") String query) {
+    //         @Parameter(description = "搜索关键词", required = true, example = "cryptocurrency") String query) {
     //     try {
     //         if (query == null || query.trim().isEmpty()) {
     //             return ResponseEntity.badRequest()

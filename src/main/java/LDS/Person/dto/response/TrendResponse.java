@@ -2,8 +2,7 @@ package LDS.Person.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -14,16 +13,16 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-@ApiModel(value = "TrendResponse", description = "趋势响应")
+@Schema(name = "TrendResponse", description = "趋势响应")
 public class TrendResponse {
 
-    @ApiModelProperty(value = "业务状态码")
+    @Schema(description = "业务状态码")
     private int code;
 
-    @ApiModelProperty(value = "响应信息")
+    @Schema(description = "响应信息")
     private String message;
 
-    @ApiModelProperty(value = "趋势列表数据")
+    @Schema(description = "趋势列表数据")
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<TrendData> data;
 
@@ -51,23 +50,23 @@ public class TrendResponse {
 
     @Data
     @NoArgsConstructor
-    @ApiModel(value = "TrendData", description = "单条趋势信息")
+    @Schema(name = "TrendData", description = "单条趋势信息")
     public static class TrendData {
 
         @JsonProperty("trend_name")
-        @ApiModelProperty(value = "趋势名称")
+        @Schema(description = "趋势名称")
         private String trendName;
 
         @JsonProperty("post_count")
-        @ApiModelProperty(value = "推文数量")
+        @Schema(description = "推文数量")
         private Integer postCount;
 
         @JsonProperty("category")
-        @ApiModelProperty(value = "分类")
+        @Schema(description = "分类")
         private String category;
 
         @JsonProperty("trending_since")
-        @ApiModelProperty(value = "开始流行时间")
+        @Schema(description = "开始流行时间")
         private String trendingSince;
     }
 }

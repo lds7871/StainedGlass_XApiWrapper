@@ -2,8 +2,7 @@ package LDS.Person.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -14,24 +13,24 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-@ApiModel(value = "NewsResponse", description = "新闻搜索响应")
+@Schema(name = "NewsResponse", description = "新闻搜索响应")
 public class NewsResponse {
 
-    @ApiModelProperty(value = "业务状态码")
+    @Schema(description = "业务状态码")
     private int code;
 
-    @ApiModelProperty(value = "响应信息")
+    @Schema(description = "响应信息")
     private String message;
 
-    @ApiModelProperty(value = "新闻列表数据")
+    @Schema(description = "新闻列表数据")
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<NewsData> data;
 
-    @ApiModelProperty(value = "结果总数")
+    @Schema(description = "结果总数")
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private Integer resultCount;
 
-    @ApiModelProperty(value = "时间戳（毫秒）")
+    @Schema(description = "时间戳（毫秒）")
     private Long timestamp;
 
     public NewsResponse(Integer code, String message, List<NewsData> data) {
@@ -80,39 +79,39 @@ public class NewsResponse {
      */
     @Data
     @NoArgsConstructor
-    @ApiModel(value = "NewsData", description = "单条新闻信息")
+    @Schema(name = "NewsData", description = "单条新闻信息")
     public static class NewsData {
 
         @JsonProperty("tweet_id")
-        @ApiModelProperty(value = "推文 ID")
+        @Schema(description = "推文 ID")
         private String tweetId;
 
         @JsonProperty("text")
-        @ApiModelProperty(value = "新闻文本")
+        @Schema(description = "新闻文本")
         private String text;
 
         @JsonProperty("author_id")
-        @ApiModelProperty(value = "作者 ID")
+        @Schema(description = "作者 ID")
         private String authorId;
 
         @JsonProperty("author_name")
-        @ApiModelProperty(value = "作者名称")
+        @Schema(description = "作者名称")
         private String authorName;
 
         @JsonProperty("created_at")
-        @ApiModelProperty(value = "创建时间")
+        @Schema(description = "创建时间")
         private String createdAt;
 
         @JsonProperty("public_metrics")
-        @ApiModelProperty(value = "公开指标")
+        @Schema(description = "公开指标")
         private PublicMetrics publicMetrics;
 
         @JsonProperty("lang")
-        @ApiModelProperty(value = "语言")
+        @Schema(description = "语言")
         private String lang;
 
         @JsonProperty("source")
-        @ApiModelProperty(value = "来源")
+        @Schema(description = "来源")
         private String source;
 
         /**
@@ -120,26 +119,26 @@ public class NewsResponse {
          */
         @Data
         @NoArgsConstructor
-        @ApiModel(value = "PublicMetrics", description = "推文公开指标")
+        @Schema(name = "PublicMetrics", description = "推文公开指标")
         public static class PublicMetrics {
 
-            @ApiModelProperty(value = "点赞数量")
+            @Schema(description = "点赞数量")
             @JsonProperty("like_count")
             private Integer likeCount;
 
-            @ApiModelProperty(value = "转推数量")
+            @Schema(description = "转推数量")
             @JsonProperty("retweet_count")
             private Integer retweetCount;
 
-            @ApiModelProperty(value = "引用数量")
+            @Schema(description = "引用数量")
             @JsonProperty("quote_count")
             private Integer quoteCount;
 
-            @ApiModelProperty(value = "回复数量")
+            @Schema(description = "回复数量")
             @JsonProperty("reply_count")
             private Integer replyCount;
 
-            @ApiModelProperty(value = "浏览数量")
+            @Schema(description = "浏览数量")
             @JsonProperty("impression_count")
             private Integer impressionCount;
         }

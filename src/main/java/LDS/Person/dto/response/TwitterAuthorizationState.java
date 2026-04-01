@@ -1,7 +1,6 @@
 package LDS.Person.dto.response;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -14,15 +13,15 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ApiModel("TwitterAuthorizationState")
+@Schema(name = "TwitterAuthorizationState")
 public class TwitterAuthorizationState {
 
-  @ApiModelProperty(value = "state 值", required = true)
+  @Schema(description = "state 值", requiredMode = Schema.RequiredMode.REQUIRED)
   private String state;
 
-  @ApiModelProperty(value = "PKCE code challenge", required = true)
+  @Schema(description = "PKCE code challenge", requiredMode = Schema.RequiredMode.REQUIRED)
   private String codeChallenge;
 
-  @ApiModelProperty(value = "PKCE 方法", example = "S256", required = true)
+  @Schema(description = "PKCE 方法", requiredMode = Schema.RequiredMode.REQUIRED, example = "S256")
   private String codeChallengeMethod;
 }

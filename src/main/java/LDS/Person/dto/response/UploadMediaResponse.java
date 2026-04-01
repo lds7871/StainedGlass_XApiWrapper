@@ -1,7 +1,6 @@
 package LDS.Person.dto.response;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,19 +11,19 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@ApiModel(value = "UploadMediaResponse", description = "媒体上传响应")
+@Schema(name = "UploadMediaResponse", description = "媒体上传响应")
 public class UploadMediaResponse {
 
-    @ApiModelProperty(value = "HTTP 状态码", example = "200")
+    @Schema(description = "HTTP 状态码", example = "200")
     private Integer code;
 
-    @ApiModelProperty(value = "响应消息", example = "✅ 媒体上传成功")
+    @Schema(description = "响应消息", example = "✅ 媒体上传成功")
     private String message;
 
-    @ApiModelProperty(value = "响应数据（包含 media_id, media_key 等）")
+    @Schema(description = "响应数据（包含 media_id, media_key 等）")
     private Object data;
 
-    @ApiModelProperty(value = "时间戳（毫秒）", example = "1704067200000")
+    @Schema(description = "时间戳（毫秒）", example = "1704067200000")
     private Long timestamp;
 
     public UploadMediaResponse(Integer code, String message, Object data) {
